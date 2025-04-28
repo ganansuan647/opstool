@@ -1,5 +1,6 @@
 from ._BaseHandler import BaseHandler
 
+
 class MaterialManager(BaseHandler):
     def __init__(self):
         self.materials = {}

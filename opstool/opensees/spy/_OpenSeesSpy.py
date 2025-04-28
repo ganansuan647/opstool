@@ -1,6 +1,9 @@
+import functools
+import types
 from collections import defaultdict
-import inspect, types, functools
-from _manager import BaseHandler, NodeManager, ElementManager, MaterialManager, LoadManager, TimeSeriesManager
+
+from _manager import BaseHandler, ElementManager, LoadManager, MaterialManager, NodeManager, TimeSeriesManager
+
 
 class OpenSeesSpy:
     def __init__(self, module):
@@ -11,10 +14,10 @@ class OpenSeesSpy:
         # Register handlers here
         self.handlers: list[BaseHandler] = [
             NodeManager(),
-            ElementManager(),
-            MaterialManager(),
-            TimeSeriesManager(),
-            LoadManager()
+            # ElementManager(),
+            # MaterialManager(),
+            # TimeSeriesManager(),
+            # LoadManager(),
         ]
 
         # Build a dispatch table: func_name -> handler
@@ -34,7 +37,6 @@ class OpenSeesSpy:
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-
             arg_map = {"args": args, "kwargs": kwargs}
 
             self.call_log[name].append(arg_map)
@@ -60,9 +62,9 @@ class OpenSeesSpy:
             handler.clear()
 
 
-if __name__ == '__main__':
-    import openseespy.opensees as ops
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    import openseespy.opensees as ops
 
     # 假设你已经有下面这些类
     # - OpenSeesSpy
@@ -96,7 +98,7 @@ if __name__ == '__main__':
 
     # 绘图
     plt.figure(figsize=(5, 5))
-    plt.scatter(x_coords, y_coords, c='blue', s=60)
+    plt.scatter(x_coords, y_coords, c="blue", s=60)
 
     # 添加标签
     for i, txt in enumerate(labels):
@@ -108,4 +110,3 @@ if __name__ == '__main__':
     plt.axis("equal")
     plt.grid(True)
     plt.show()
-

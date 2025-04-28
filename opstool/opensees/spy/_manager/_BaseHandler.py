@@ -1,63 +1,54 @@
-from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, ClassVar
+from abc import ABC, abstractmethod
 
-class BaseHandler:
 
-    # ----- Shared storage across handlers ----- #
-    nodal_mass = defaultdict(lambda: 0.0)
-    ele_load_surface = defaultdict(lambda: 0.0)
-    ele_load_solid = defaultdict(lambda: 0.0)
-
+class BaseHandler(ABC):
     # A minimal set of parsing rules for the most commonly used OpenSeesPy
     # commands.  Each entry describes how positional arguments should be mapped
     # and what optional *flag*-style arguments exist.  A trailing ``*`` on the
     # key name indicates that the value can contain an arbitrary number of
     # tokens which will be returned as a :class:`list`.
-    _COMMAND_RULES: dict[str, dict[str, Any]] = {
-        # node(nodeTag, *crds, '-ndf', ndf, '-mass', *mass, '-disp', ...)  
-        "node": {
-            "positional": ["tag", "coords*"],
-            "options": {
-                "-ndf": "ndf",
-                "-mass": "mass*",
-                "-disp": "disp*",
-                "-vel": "vel*",
-                "-accel": "accel*",
-            },
-        },
-        # mass(nodeTag, *massValues)
-        "mass": {
-            "positional": ["tag", "mass*"],
-        },
-        # element(typeName, tag, *args)
-        "element": {
-            "positional": ["typeName", "tag", "args*"],
-        },
-        # uniaxialMaterial(matType, matTag, *matArgs)
-        "uniaxialMaterial": {
-            "positional": ["matType", "matTag", "args*"],
-        },
-        # timeSeries(typeName, tag, *args)
-        "timeSeries": {
-            "positional": ["typeName", "tag", "args*"],
-        },
-        # Generic load(tag, *args)
-        "load": {
-            "positional": ["tag", "args*"],
-        },
-    }
+    @property
+    @abstractmethod
+    def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
+        raise NotImplementedError
+
+    #     # mass(nodeTag, *massValues)
+    #     "mass": {
+    #         "positional": ["tag", "mass*"],
+    #     },
+    #     # element(typeName, tag, *args)
+    #     "element": {
+    #         "positional": ["typeName", "tag", "args*"],
+    #     },
+    #     # uniaxialMaterial(matType, matTag, *matArgs)
+    #     "uniaxialMaterial": {
+    #         "positional": ["matType", "matTag", "args*"],
+    #     },
+    #     # timeSeries(typeName, tag, *args)
+    #     "timeSeries": {
+    #         "positional": ["typeName", "tag", "args*"],
+    #     },
+    #     # Generic load(tag, *args)
+    #     "load": {
+    #         "positional": ["tag", "args*"],
+    #     },
+    # }
 
     # ---------------------------------------------------------------------
     # Abstract API – MUST be implemented by subclasses
     # ---------------------------------------------------------------------
-    def handles(self) -> List[str]:
+    @abstractmethod
+    def handles(self) -> list[str]:
         """Return a list of function names this handler can process."""
         raise NotImplementedError
 
-    def handle(self, func_name: str, arg_map: Dict[str, Any]):
+    @abstractmethod
+    def handle(self, func_name: str, arg_map: dict[str, Any]):
         """Process the function *func_name* using the already parsed *arg_map*."""
         raise NotImplementedError
 
+    @abstractmethod
     def clear(self):
         """Reset internal data maintained by a concrete handler."""
         raise NotImplementedError
@@ -66,7 +57,7 @@ class BaseHandler:
     # Generic helpers shared by all handlers
     # ------------------------------------------------------------------
     @staticmethod
-    def _extract_args_by_str(lst: List[Any], target_keys):
+    def _extract_args_by_str(lst: list[Any], target_keys):
         """Return the values *following* any of *target_keys* until the next
         string token is encountered.
 
@@ -77,7 +68,7 @@ class BaseHandler:
         target_keys
             A single key or an iterable of keys that should be searched for.
         """
-        result: List[Any] = []
+        result: list[Any] = []
         found = False
         if not isinstance(target_keys, str):
             target_keys = set(target_keys)
@@ -99,8 +90,9 @@ class BaseHandler:
     # ------------------------------------------------------------------
     # Universal command-line like argument parser
     # ------------------------------------------------------------------
-    @classmethod
-    def parse_command(cls, func_name: str, args: Tuple[Any, ...], kwargs: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def parse_command(
+        self, func_name: str, args: tuple[Any, ...], kwargs: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Parse *args* / *kwargs* of an OpenSeesPy *func_name* call into a
         dictionary according to :pyattr:`_COMMAND_RULES`.
 
@@ -120,22 +112,22 @@ class BaseHandler:
         perfect, just sufficiently useful for most handlers.
         """
         kwargs = dict(kwargs or {})  # copy to avoid mutating caller data
-        rule = cls._COMMAND_RULES.get(func_name)
+        rule = self._COMMAND_RULES.get(func_name)
 
         # If we have no dedicated rule simply return raw positional arguments.
         if rule is None:
-            generic: Dict[str, Any] = {}
+            generic: dict[str, Any] = {}
 
             # First parse flags so we can remove them from positional slice.
             consumed: set[int] = set()
             for i, token in enumerate(args):
                 if isinstance(token, str) and token.startswith("-"):
                     flag = token.lstrip("-")
-                    values = cls._extract_args_by_str(args[i:], token)
+                    values = self._extract_args_by_str(args[i:], token)
                     generic[flag] = values if len(values) > 1 else (values[0] if values else True)
                     # Mark consumed indices (flag itself plus its values)
                     consumed.add(i)
-                    for j in range(1, len(values)+1):
+                    for j in range(1, len(values) + 1):
                         if i + j < len(args):
                             consumed.add(i + j)
 
@@ -165,8 +157,8 @@ class BaseHandler:
             generic.update(kwargs)
             return generic
 
-        result: Dict[str, Any] = {}
-        arg_list: List[Any] = list(args)
+        result: dict[str, Any] = {}
+        arg_list: list[Any] = list(args)
 
         # ------------------ parse positional arguments ------------------ #
         idx = 0
@@ -200,7 +192,7 @@ class BaseHandler:
         # ------------------ parse option flags -------------------------- #
         for flag, name in rule.get("options", {}).items():
             if flag in arg_list:
-                values = cls._extract_args_by_str(arg_list, flag)
+                values = self._extract_args_by_str(arg_list, flag)
                 if name.endswith("*"):
                     result[name.rstrip("*")] = values
                 else:

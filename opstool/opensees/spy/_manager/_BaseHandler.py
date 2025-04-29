@@ -1,5 +1,5 @@
-from typing import Any, ClassVar, Union
 from abc import ABC, abstractmethod
+from typing import Any, Union
 
 
 class BaseHandler(ABC):
@@ -8,35 +8,17 @@ class BaseHandler(ABC):
     # and what optional *flag*-style arguments exist.  A trailing ``*`` on the
     # key name indicates that the value can contain an arbitrary number of
     # tokens which will be returned as a :class:`list`.
+
+    # ---------------------------------------------------------------------
+    # Abstract Property - MUST be implemented by subclasses
+    # ---------------------------------------------------------------------
     @property
     @abstractmethod
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
         raise NotImplementedError
 
-    #     # mass(nodeTag, *massValues)
-    #     "mass": {
-    #         "positional": ["tag", "mass*"],
-    #     },
-    #     # element(typeName, tag, *args)
-    #     "element": {
-    #         "positional": ["typeName", "tag", "args*"],
-    #     },
-    #     # uniaxialMaterial(matType, matTag, *matArgs)
-    #     "uniaxialMaterial": {
-    #         "positional": ["matType", "matTag", "args*"],
-    #     },
-    #     # timeSeries(typeName, tag, *args)
-    #     "timeSeries": {
-    #         "positional": ["typeName", "tag", "args*"],
-    #     },
-    #     # Generic load(tag, *args)
-    #     "load": {
-    #         "positional": ["tag", "args*"],
-    #     },
-    # }
-
     # ---------------------------------------------------------------------
-    # Abstract API – MUST be implemented by subclasses
+    # Abstract API - MUST be implemented by subclasses
     # ---------------------------------------------------------------------
     @abstractmethod
     def handles(self) -> list[str]:
@@ -82,10 +64,10 @@ class BaseHandler(ABC):
         """
         if lst is None or len(lst) == 0:
             return []
-        
+
         result: list[Any] = []
         found = False
-        
+
         if target_keys is None:
             target_keys = set()
         elif isinstance(target_keys, str):
@@ -95,7 +77,7 @@ class BaseHandler(ABC):
                 target_keys = set(target_keys)
             except (TypeError, ValueError):
                 target_keys = {target_keys}
-        
+
         for item in lst:
             if found:
                 if isinstance(item, str):
@@ -103,15 +85,138 @@ class BaseHandler(ABC):
                 result.append(item)
             elif item in target_keys:
                 found = True
-        
+
+        return result
+
+    @staticmethod
+    def _parse_generic_command(args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
+        """Parse command arguments without a specific rule."""
+        generic: dict[str, Any] = {}
+
+        # First parse flags so we can remove them from positional slice
+        consumed: set[int] = set()
+        for i, token in enumerate(args):
+            if isinstance(token, str) and token.startswith("-"):
+                flag = token.lstrip("-")
+                values = BaseHandler._extract_args_by_str(args[i:], token)
+                generic[flag] = values if len(values) > 1 else (values[0] if values else True)
+                # Mark consumed indices (flag itself plus its values)
+                consumed.add(i)
+                for j in range(1, len(values) + 1):
+                    if i + j < len(args):
+                        consumed.add(i + j)
+
+        # Remaining tokens are considered positional
+        positional_tokens = [tok for idx_, tok in enumerate(args) if idx_ not in consumed]
+        generic["args"] = positional_tokens
+
+        # Merge with kwargs; kwargs has priority
+        generic.update(kwargs)
+        return generic
+
+    @staticmethod
+    def _parse_rule_based_command(
+        rule: dict[str, Any], args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Parse command arguments according to a specific rule."""
+        result: dict[str, Any] = {}
+        arg_list: list[Any] = [x for x in list(args) if x != {} and x is not None]
+
+        # Parse positional arguments
+        result.update(BaseHandler._parse_positional_args(rule, arg_list))
+
+        # 记录解析选项标志前的args
+        orig_args = result.get("args", [])
+
+        # Parse option flags
+        option_result = BaseHandler._parse_option_flags(rule, arg_list)
+        result.update(option_result)
+
+        # 如果有解析出选项标志, 并且存在args字段, 则清理args中的选项标志及其值
+        if option_result and "args" in result and orig_args:
+            # 获取所有选项标志
+            option_flags = rule.get("options", {}).keys()
+            # 清理args中的选项标志及其值
+            cleaned_args = []
+            skip_count = 0
+
+            for i, item in enumerate(orig_args):
+                if skip_count > 0:
+                    skip_count -= 1
+                    continue
+
+                # 如果当前项是选项标志, 跳过它及其值
+                if item in option_flags:
+                    # 获取这个选项后面的值的数量
+                    values = BaseHandler._extract_args_by_str(orig_args[i:], item)
+                    skip_count = len(values)
+                    continue
+
+                cleaned_args.append(item)
+
+            # 更新args字段
+            if cleaned_args:
+                result["args"] = cleaned_args
+            else:
+                # 如果清理后args为空, 则移除args字段
+                result.pop("args", None)
+
+        # kwargs take precedence over everything parsed from *args*
+        result.update(kwargs)
+        return result
+
+    @staticmethod
+    def _parse_positional_args(rule: dict[str, Any], arg_list: list[Any]) -> dict[str, Any]:
+        """Parse positional arguments according to rule."""
+        result: dict[str, Any] = {}
+        idx = 0
+
+        for name in rule.get("positional", []):
+            is_variadic = name.endswith("*")
+            clean_name = name.rstrip("*")
+
+            if is_variadic:
+                # Consume tokens until next recognised option flag (if any)
+                stop_idx = len(arg_list)
+                for flag in rule.get("options", {}):
+                    if flag in arg_list[idx:]:
+                        candidate = arg_list.index(flag, idx)
+                        stop_idx = min(stop_idx, candidate)
+
+                result[clean_name] = arg_list[idx:stop_idx]
+                idx = stop_idx
+                continue
+
+            if idx < len(arg_list):
+                result[clean_name] = arg_list[idx]
+                idx += 1
+
+        # Store unconsumed positional tokens under "args"
+        if idx < len(arg_list):
+            result.setdefault("args", []).extend(arg_list[idx:])
+
+        return result
+
+    @staticmethod
+    def _parse_option_flags(rule: dict[str, Any], arg_list: list[Any]) -> dict[str, Any]:
+        """Parse option flags according to rule."""
+        result: dict[str, Any] = {}
+
+        for flag, name in rule.get("options", {}).items():
+            if flag in arg_list:
+                values = BaseHandler._extract_args_by_str(arg_list, flag)
+                if name.endswith("*"):
+                    result[name.rstrip("*")] = values
+                else:
+                    if values:
+                        result[name] = values[0] if len(values) == 1 else values
+
         return result
 
     # ------------------------------------------------------------------
     # Universal command-line like argument parser
     # ------------------------------------------------------------------
-    def parse_command(
-        self, func_name: str, args: tuple[Any, ...], kwargs: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def parse_command(self, func_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Parse *args* / *kwargs* of an OpenSeesPy *func_name* call into a
         dictionary according to :pyattr:`_COMMAND_RULES`.
 
@@ -133,96 +238,14 @@ class BaseHandler(ABC):
         kwargs = dict(kwargs or {})  # copy to avoid mutating caller data
         rule = self._COMMAND_RULES.get(func_name)
 
-        # If we have no dedicated rule simply return raw positional arguments.
+        # If we have no dedicated rule, use generic parsing
         if rule is None:
-            generic: dict[str, Any] = {}
+            return self._parse_generic_command(args, kwargs)
 
-            # First parse flags so we can remove them from positional slice.
-            consumed: set[int] = set()
-            for i, token in enumerate(args):
-                if isinstance(token, str) and token.startswith("-"):
-                    flag = token.lstrip("-")
-                    values = self._extract_args_by_str(args[i:], token)
-                    generic[flag] = values if len(values) > 1 else (values[0] if values else True)
-                    # Mark consumed indices (flag itself plus its values)
-                    consumed.add(i)
-                    for j in range(1, len(values) + 1):
-                        if i + j < len(args):
-                            consumed.add(i + j)
-
-            # Remaining tokens are considered positional
-            positional_tokens = [tok for idx_, tok in enumerate(args) if idx_ not in consumed]
-
-            if positional_tokens:
-                # Heuristic-2:  If first token is str -> typeName.
-                if isinstance(positional_tokens[0], str):
-                    if len(positional_tokens) >= 2 and isinstance(positional_tokens[1], int):
-                        generic["typeName"] = positional_tokens[0]
-                        generic["tag"] = positional_tokens[1]
-                        if len(positional_tokens) > 2:
-                            generic["args"] = positional_tokens[2:]
-                    else:
-                        generic["args"] = positional_tokens
-                else:
-                    # First token not str: treat as tag if int
-                    if isinstance(positional_tokens[0], int):
-                        generic["tag"] = positional_tokens[0]
-                        if len(positional_tokens) > 1:
-                            generic["args"] = positional_tokens[1:]
-                    else:
-                        generic["args"] = positional_tokens
-
-            # Merge with kwargs; kwargs has priority.
-            generic.update(kwargs)
-            return generic
-
-        result: dict[str, Any] = {}
-        arg_list: list[Any] = list(args)
-
-        # ------------------ parse positional arguments ------------------ #
-        idx = 0
-        for name in rule.get("positional", []):
-            is_variadic = name.endswith("*")
-            clean_name = name.rstrip("*")
-            if is_variadic:
-                # Consume tokens until next recognised option flag (if any)
-                stop_idx = len(arg_list)
-                for flag in rule.get("options", {}).keys():
-                    if flag in arg_list[idx:]:
-                        candidate = arg_list.index(flag, idx)
-                        stop_idx = min(stop_idx, candidate)
-
-                result[clean_name] = arg_list[idx:stop_idx]
-                idx = stop_idx
-                continue
-            if idx < len(arg_list):
-                result[clean_name] = arg_list[idx]
-                idx += 1
-            else:
-                # Missing optional positional – ignore.
-                break
-
-        # Unconsumed positional tokens that are *not* covered by a variadic
-        # specifier are stored under the generic ``args`` key so that concrete
-        # handlers can still use them if required.
-        if idx < len(arg_list):
-            result.setdefault("args", []).extend(arg_list[idx:])
-
-        # ------------------ parse option flags -------------------------- #
-        for flag, name in rule.get("options", {}).items():
-            if flag in arg_list:
-                values = self._extract_args_by_str(arg_list, flag)
-                if name.endswith("*"):
-                    result[name.rstrip("*")] = values
-                else:
-                    if values:
-                        result[name] = values[0] if len(values) == 1 else values
-
-        # kwargs take precedence over everything parsed from *args*
-        result.update(kwargs)
-        return result
+        # Otherwise use rule-based parsing
+        return self._parse_rule_based_command(rule, args, kwargs)
 
     # Convenience helper so that concrete handlers can do::
     #     parsed = self._parse(func_name, *args, **kwargs)
     def _parse(self, func_name: str, *args, **kwargs):
-        return self.parse_command(func_name, args, kwargs)
+        return self.parse_command(func_name, *args, *kwargs)

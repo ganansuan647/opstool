@@ -26,9 +26,9 @@ class NodeManager(BaseHandler):
             "mass": {
                 "positional": ["tag", "mass*"],
             },
-            # model(typeName, *args)
+            # model(type, *args)
             "model": {
-                "positional": ["typeName"],
+                "positional": ["type"],
                 "options": {
                     "-ndm": "ndm",
                     "-ndf": "ndf",
@@ -39,22 +39,23 @@ class NodeManager(BaseHandler):
     def handles(self):
         return ["node", "mass", "model"]
 
-    def handle(self, func_name: str, args: dict[str, Any]):
+    def handle(self, func_name: str, arg_map: dict[str, Any]):
+        args,kwargs = arg_map.get("args"),arg_map.get("kwargs")
         if func_name == "node":
-            self._handle_node(args)
+            self._handle_node(*args,**kwargs)
         elif func_name == "mass":
-            self._handle_mass(args)
+            self._handle_mass(*args,**kwargs)
         elif func_name == "model":
-            self._handle_model(args)
+            self._handle_model(*args,**kwargs)
 
-    def _handle_node(self, args: dict[str, Any]):
-        arg_map = self._parse("node", **args)
+    def _handle_node(self, *args: Any, **kwargs: Any):
+        arg_map = self._parse("node", *args, **kwargs)
 
         # 使用parse_command处理的结果
         tag = arg_map.get("tag")
         if not tag:
             return
-        
+
         coords = arg_map.get("coords", [])
         ndm = arg_map.get("ndm", self.ndm)
         ndf = arg_map.get("ndf", self.ndf)  # 使用模型默认值
@@ -62,7 +63,7 @@ class NodeManager(BaseHandler):
         disp = arg_map.get("disp", [])
         vel = arg_map.get("vel", [])
         accel = arg_map.get("accel", [])
-        
+
         # 保存节点信息
         node_info = {"coords": coords, "ndm": ndm, "ndf": ndf}
 
@@ -81,8 +82,8 @@ class NodeManager(BaseHandler):
 
         self.nodes[tag] = node_info
 
-    def _handle_mass(self, args: dict[str, Any]):
-        arg_map = self._parse("mass", **args)
+    def _handle_mass(self, *args: Any, **kwargs: Any):
+        arg_map = self._parse("mass", *args, **kwargs)
         tag = arg_map.get("tag")
         if not tag:
             return
@@ -96,8 +97,8 @@ class NodeManager(BaseHandler):
         node_info["mass"] = mass_values
         self.nodes[tag] = node_info
 
-    def _handle_model(self, args: dict[str, Any]):
-        arg_map = self.parse_command("model", **args)
+    def _handle_model(self, *args: Any, **kwargs: Any):
+        arg_map = self.parse_command("model", *args, **kwargs)
         # 处理模型维度和自由度设置
         args = arg_map.get("args", [])
 

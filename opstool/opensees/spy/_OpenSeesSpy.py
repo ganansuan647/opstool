@@ -3,7 +3,7 @@ import types
 from collections import defaultdict
 from typing import Union, Iterator, Optional
 
-from _manager import BaseHandler, ElementManager, LoadManager, MaterialManager, NodeManager, TimeSeriesManager
+from ._manager import BaseHandler, ElementManager, LoadManager, MaterialManager, NodeManager, TimeSeriesManager
 
 
 class HandlerCollection:
@@ -77,10 +77,10 @@ class OpenSeesSpy:
         # Register handlers here
         self.handlers = HandlerCollection()
         self.handlers.add(NodeManager(),"Node")
-        self.handlers.add(ElementManager(),"Element")
-        self.handlers.add(MaterialManager(),"Material")
-        self.handlers.add(TimeSeriesManager(),"TimeSeries")
-        self.handlers.add(LoadManager(),"Load")
+        # self.handlers.add(ElementManager(),"Element")
+        # self.handlers.add(MaterialManager(),"Material")
+        # self.handlers.add(TimeSeriesManager(),"TimeSeries")
+        # self.handlers.add(LoadManager(),"Load")
 
         # Build a dispatch table: func_name -> handler
         self.dispatch_table: dict[str, BaseHandler] = self.handlers.get_dispatch_table()
@@ -150,9 +150,10 @@ if __name__ == "__main__":
     y_coords = []
     labels = []
 
-    for tag, info in node_dict.items():
-        x_coords.append(info.get("coords")[0])
-        y_coords.append(info.get("coords")[1])
+    for tag in node_dict:
+        coords = spy.handlers["Node"].get_node_coords(tag)
+        x_coords.append(coords[0])
+        y_coords.append(coords[1])
         labels.append(str(tag))
 
     # 绘图

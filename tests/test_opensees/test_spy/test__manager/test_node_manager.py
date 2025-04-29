@@ -1,138 +1,200 @@
-import unittest
-import importlib.util
-from pathlib import Path
-import sys
-import os
-
-# 首先将spy/_manager目录添加到sys.path，以便动态导入模块
-spy_manager_path = str(Path(__file__).resolve().parents[1] / "opstool" / "opensees" / "spy" / "_manager")
-sys.path.insert(0, spy_manager_path)
-
-# 先导入BaseHandler
-base_path = os.path.join(spy_manager_path, "_BaseHandler.py")
-spec = importlib.util.spec_from_file_location("BaseHandler", base_path)
-base_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(base_module)
-BaseHandler = base_module.BaseHandler
-
-# 然后导入NodeManager
-node_path = os.path.join(spy_manager_path, "_NodeManager.py")
-# 创建一个自定义加载器，用于重写模块的__file__属性
-spec = importlib.util.spec_from_file_location("NodeManager", node_path)
-node_module = importlib.util.module_from_spec(spec)
-
-# 在导入前添加所需的全局变量
-node_module.BaseHandler = BaseHandler  # 提供BaseHandler给NodeManager使用
-
-spec.loader.exec_module(node_module)
-NodeManager = node_module.NodeManager
+import pytest
+from typing import Any, Dict, List, Optional
+from opstool.opensees.spy import NodeManager, BaseHandler
 
 
-class TestNodeManager(unittest.TestCase):
-    def setUp(self):
-        """每个测试前初始化一个NodeManager实例"""
-        self.node_manager = NodeManager()
+@pytest.fixture
+def node_manager() -> NodeManager:
+    """每个测试前初始化一个NodeManager实例"""
+    return NodeManager()
 
-    def test_handle_node(self):
-        """测试节点数据处理功能"""
-        # 2D节点情况
-        cmd = "node"
-        args = (1, 10.0, 20.0)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
 
-        # 检查节点是否正确存储
-        self.assertIn(1, self.node_manager.nodes)
-        node_data = self.node_manager.nodes[1]
-        self.assertEqual(node_data["coords"], [10.0, 20.0])
+def test_handle_node(node_manager: NodeManager) -> None:
+    """测试节点数据处理功能"""
+    # 2D节点情况
+    cmd = "node"
+    args = (1, 10.0, 20.0)
+    parsed = node_manager._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-        # 3D节点情况
-        cmd = "node"
-        args = (2, 10.0, 20.0, 30.0, "-ndf", 6)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
+    # 检查节点是否正确存储
+    assert 1 in node_manager.nodes
+    node_data = node_manager.nodes[1]
+    assert node_data["coords"] == [10.0, 20.0]
 
-        # 检查节点是否正确存储
-        self.assertIn(2, self.node_manager.nodes)
-        node_data = self.node_manager.nodes[2]
-        self.assertEqual(node_data["coords"], [10.0, 20.0, 30.0])
-        self.assertEqual(node_data["ndf"], 6)
+    # 3D节点情况
+    cmd = "node"
+    args = (2, 10.0, 20.0, 30.0, "-ndf", 6)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-    def test_handle_mass(self):
-        """测试质量处理功能"""
-        # 先创建节点
-        cmd = "node"
-        args = (1, 10.0, 20.0)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
+    # 检查节点是否正确存储
+    assert 2 in node_manager.nodes
+    node_data = node_manager.nodes[2]
+    assert node_data["coords"] == [10.0, 20.0, 30.0]
+    assert node_data["ndf"] == 6
 
-        # 添加质量
-        cmd = "mass"
-        args = (1, 1.5, 2.5, 3.5)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
 
-        # 检查质量是否正确存储
-        self.assertIn(1, self.node_manager.nodes)
-        node_data = self.node_manager.nodes[1]
-        self.assertIn("mass", node_data)
-        self.assertEqual(node_data["mass"], [1.5, 2.5, 3.5])
+def test_node_with_additional_params(node_manager: NodeManager) -> None:
+    """测试带有额外参数的节点处理"""
+    cmd = "node"
+    # 节点带有质量、位移、速度和加速度参数
+    args = (3, 10.0, 20.0, 30.0, "-ndf", 3, "-mass", 1.0, 2.0, 3.0, 
+            "-disp", 0.1, 0.2, 0.3, "-vel", 0.01, 0.02, 0.03, "-accel", 0.001, 0.002, 0.003)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-    def test_handle_model(self):
-        """测试模型设置处理功能"""
-        cmd = "model"
-        args = ("basic", "-ndm", 3, "-ndf", 6)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
+    # 检查节点是否正确存储所有参数
+    assert 3 in node_manager.nodes
+    node_data = node_manager.nodes[3]
+    assert node_data["coords"] == [10.0, 20.0, 30.0]
+    assert node_data["ndf"] == 3
+    assert node_data["mass"] == [1.0, 2.0, 3.0]
+    assert node_data["disp"] == [0.1, 0.2, 0.3]
+    assert node_data["vel"] == [0.01, 0.02, 0.03]
+    assert node_data["accel"] == [0.001, 0.002, 0.003]
 
-        # 检查模型维度和自由度是否正确设置
-        self.assertEqual(self.node_manager.dims, 3)
-        self.assertEqual(self.node_manager.ndf, 6)
 
-    def test_get_node_coords(self):
-        """测试获取节点坐标功能"""
-        # 创建测试节点
-        cmd = "node"
-        args = (1, 10.0, 20.0, 30.0)
-        parsed = BaseHandler.parse_command(cmd, args, {})
-        self.node_manager.handle(cmd, parsed)
+def test_handle_mass(node_manager: NodeManager) -> None:
+    """测试质量处理功能"""
+    # 先创建节点
+    cmd = "node"
+    args = (1, 10.0, 20.0)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-        # 测试获取坐标
-        coords = self.node_manager.get_node_coords(1)
-        self.assertEqual(coords, [10.0, 20.0, 30.0])
+    # 添加质量
+    cmd = "mass"
+    args = (1, 1.5, 2.5, 3.5)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-        # 测试获取不存在节点的坐标
-        coords = self.node_manager.get_node_coords(999)
-        self.assertEqual(coords, [])
+    # 检查质量是否正确存储
+    assert 1 in node_manager.nodes
+    node_data = node_manager.nodes[1]
+    assert "mass" in node_data
+    assert node_data["mass"] == [1.5, 2.5, 3.5]
 
-    def test_get_nodes_by_coords(self):
-        """测试通过坐标查找节点功能"""
-        # 创建测试节点
-        cmd = "node"
-        args1 = (1, 10.0, 20.0, 30.0)
-        args2 = (2, 10.0, 20.0, 40.0)
-        args3 = (3, 20.0, 30.0, 40.0)
 
-        for args in [args1, args2, args3]:
-            parsed = BaseHandler.parse_command(cmd, args, {})
-            self.node_manager.handle(cmd, parsed)
+def test_handle_model(node_manager: NodeManager) -> None:
+    """测试模型设置处理功能"""
+    cmd = "model"
+    args = ("basic", "-ndm", 3, "-ndf", 6)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-        # 测试通过x坐标查询
-        nodes = self.node_manager.get_nodes_by_coords(x=10.0)
-        self.assertEqual(set(nodes), {1, 2})
+    # 检查模型维度和自由度是否正确设置
+    assert node_manager.ndm == 3  # 注意：是ndm而不是dims
+    assert node_manager.ndf == 6
 
-        # 测试通过x,y坐标查询
-        nodes = self.node_manager.get_nodes_by_coords(x=10.0, y=20.0)
-        self.assertEqual(set(nodes), {1, 2})
 
-        # 测试通过完整坐标查询
-        nodes = self.node_manager.get_nodes_by_coords(x=10.0, y=20.0, z=30.0)
-        self.assertEqual(set(nodes), {1})
+def test_get_node_coords(node_manager: NodeManager) -> None:
+    """测试获取节点坐标功能"""
+    # 创建测试节点
+    cmd = "node"
+    args = (1, 10.0, 20.0, 30.0)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
 
-        # 测试无匹配情况
-        nodes = self.node_manager.get_nodes_by_coords(x=99.0)
-        self.assertEqual(nodes, [])
+    # 测试获取坐标
+    coords = node_manager.get_node_coords(1)
+    assert coords == [10.0, 20.0, 30.0]
+
+    # 测试获取不存在节点的坐标
+    coords = node_manager.get_node_coords(999)
+    assert coords == []
+
+
+def test_get_node_mass(node_manager: NodeManager) -> None:
+    """测试获取节点质量功能"""
+    # 创建节点并设置质量
+    cmd = "node"
+    args = (1, 10.0, 20.0, "-mass", 1.5, 2.5, 3.5)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
+
+    # 测试获取质量
+    mass = node_manager.get_node_mass(1)
+    assert mass == [1.5, 2.5, 3.5]
+
+    # 测试获取不存在节点的质量
+    mass = node_manager.get_node_mass(999)
+    assert mass == []
+
+    # 测试获取没有质量属性的节点
+    cmd = "node"
+    args = (2, 10.0, 20.0)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
+
+    mass = node_manager.get_node_mass(2)
+    assert mass == []
+
+
+def test_get_nodes_by_coords(node_manager: NodeManager) -> None:
+    """测试通过坐标查找节点功能"""
+    # 创建测试节点
+    cmd = "node"
+    args1 = (1, 10.0, 20.0, 30.0)
+    args2 = (2, 10.0, 20.0, 40.0)
+    args3 = (3, 20.0, 30.0, 40.0)
+
+    for args in [args1, args2, args3]:
+        parsed = BaseHandler._parse(cmd, args, {})
+        node_manager.handle(cmd, parsed)
+
+    # 测试通过x坐标查询
+    nodes = node_manager.get_nodes_by_coords(x=10.0)
+    assert set(nodes) == {1, 2}
+
+    # 测试通过x,y坐标查询
+    nodes = node_manager.get_nodes_by_coords(x=10.0, y=20.0)
+    assert set(nodes) == {1, 2}
+
+    # 测试通过完整坐标查询
+    nodes = node_manager.get_nodes_by_coords(x=10.0, y=20.0, z=30.0)
+    assert set(nodes) == {1}
+
+    # 测试无匹配情况
+    nodes = node_manager.get_nodes_by_coords(x=99.0)
+    assert nodes == []
+
+
+def test_clear(node_manager: NodeManager) -> None:
+    """测试清除功能"""
+    # 先创建一些节点和设置模型参数
+    cmd = "model"
+    args = ("basic", "-ndm", 3, "-ndf", 6)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
+
+    cmd = "node"
+    args = (1, 10.0, 20.0, 30.0)
+    parsed = BaseHandler._parse(cmd, args, {})
+    node_manager.handle(cmd, parsed)
+
+    # 验证数据存在
+    assert node_manager.ndm == 3
+    assert node_manager.ndf == 6
+    assert len(node_manager.nodes) == 1
+
+    # 清除数据
+    node_manager.clear()
+
+    # 验证数据被清除
+    assert node_manager.ndm == 0
+    assert node_manager.ndf == 0
+    assert len(node_manager.nodes) == 0
+
+
+def test_handles(node_manager: NodeManager) -> None:
+    """测试handles方法"""
+    handles = node_manager.handles()
+    assert isinstance(handles, list)
+    assert "node" in handles
+    assert "mass" in handles
+    assert "model" in handles
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main()

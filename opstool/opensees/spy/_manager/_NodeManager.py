@@ -5,8 +5,8 @@ from typing import Any, Optional, override
 class NodeManager(BaseHandler):
     def __init__(self):
         self.nodes = {}  # tag -> {coords: [], mass: [], ndf: int}
-        self.dims = 0  # 模型维度
-        self.dofs = 0  # 默认自由度数
+        self.ndm = 0  # 模型维度
+        self.ndf = 0  # 节点自由度数
 
     @property
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
@@ -15,7 +15,7 @@ class NodeManager(BaseHandler):
             "node": {
                 "positional": ["tag", "coords*"],
                 "options": {
-                    "-ndf": "dofs",
+                    "-ndf": "ndf",
                     "-mass": "mass*",
                     "-disp": "disp*",
                     "-vel": "vel*",
@@ -30,8 +30,8 @@ class NodeManager(BaseHandler):
             "model": {
                 "positional": ["typeName"],
                 "options": {
-                    "-ndm": "dims",
-                    "-ndf": "dofs",
+                    "-ndm": "ndm",
+                    "-ndf": "ndf",
                 },
             },
         }
@@ -48,33 +48,41 @@ class NodeManager(BaseHandler):
             self._handle_model(args)
 
     def _handle_node(self, args: dict[str, Any]):
-        arg_map = self.parse_command("node", **args)
+        arg_map = self._parse("node", **args)
 
         # 使用parse_command处理的结果
         tag = arg_map.get("tag")
         if not tag:
             return
-
+        
         coords = arg_map.get("coords", [])
-        dims = arg_map.get("dims", self.dims)
-        dofs = arg_map.get("dofs", self.dofs)  # 使用模型默认值
+        ndm = arg_map.get("ndm", self.ndm)
+        ndf = arg_map.get("ndf", self.ndf)  # 使用模型默认值
         mass = arg_map.get("mass", [])
-
+        disp = arg_map.get("disp", [])
+        vel = arg_map.get("vel", [])
+        accel = arg_map.get("accel", [])
+        
         # 保存节点信息
-        node_info = {"coords": coords, "ndm": dims, "dofs": dofs}
+        node_info = {"coords": coords, "ndm": ndm, "ndf": ndf}
 
         # 如果有质量信息，也保存下来
-        if mass:
+        if mass and len(mass) == ndf:
             node_info["mass"] = mass
-            # 更新全局质量记录
-            if len(mass) > 0:
-                total_mass = sum(mass)
-                self._add_nodal_mass(tag, total_mass)
+
+        if disp and len(disp) == ndf:
+            node_info["disp"] = disp
+
+        if vel and len(vel) == ndf:
+            node_info["vel"] = vel
+
+        if accel and len(accel) == ndf:
+            node_info["accel"] = accel
 
         self.nodes[tag] = node_info
 
     def _handle_mass(self, args: dict[str, Any]):
-        arg_map = self.parse_command("mass", **args)
+        arg_map = self._parse("mass", **args)
         tag = arg_map.get("tag")
         if not tag:
             return
@@ -88,23 +96,18 @@ class NodeManager(BaseHandler):
         node_info["mass"] = mass_values
         self.nodes[tag] = node_info
 
-        # 更新全局质量记录
-        if mass_values:
-            total_mass = sum(mass_values)
-            self._add_nodal_mass(tag, total_mass)
-
     def _handle_model(self, args: dict[str, Any]):
         arg_map = self.parse_command("model", **args)
         # 处理模型维度和自由度设置
         args = arg_map.get("args", [])
 
         # 检查是否有维度参数
-        if "dims" in arg_map:
-            self.dims = arg_map["dims"]
+        if "ndm" in arg_map:
+            self.ndm = arg_map["ndm"]
 
         # 检查是否有自由度参数
-        if "dofs" in arg_map:
-            self.ndf = arg_map["dofs"]
+        if "ndf" in arg_map:
+            self.ndf = arg_map["ndf"]
 
     def get_node_coords(self, tag: int) -> list[float]:
         """获取节点坐标"""
@@ -141,5 +144,5 @@ class NodeManager(BaseHandler):
 
     def clear(self):
         self.nodes.clear()
-        self.dims = 0
+        self.ndm = 0
         self.ndf = 0

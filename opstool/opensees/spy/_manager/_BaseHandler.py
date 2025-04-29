@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Union
 from abc import ABC, abstractmethod
 
 
@@ -53,27 +53,49 @@ class BaseHandler(ABC):
         """Reset internal data maintained by a concrete handler."""
         raise NotImplementedError
 
+
     # ------------------------------------------------------------------
     # Generic helpers shared by all handlers
     # ------------------------------------------------------------------
     @staticmethod
-    def _extract_args_by_str(lst: list[Any], target_keys):
+    def _extract_args_by_str(lst: list[Any], target_keys: Union[str, list, tuple, set]) -> list[Any]:
         """Return the values *following* any of *target_keys* until the next
         string token is encountered.
 
         Parameters
         ----------
-        lst
+        lst : list[Any]
             The full argument list.
-        target_keys
+        target_keys : Union[str, list, tuple, set]
             A single key or an iterable of keys that should be searched for.
+
+        Returns
+        -------
+        list[Any]
+            List of non-string values following any target key until the next string.
+
+        Notes
+        -----
+        - If lst is None or empty, returns an empty list
+        - If target_keys is None, treats it as an empty collection
+        - If no target key is found, returns an empty list
         """
+        if lst is None or len(lst) == 0:
+            return []
+        
         result: list[Any] = []
         found = False
-        if not isinstance(target_keys, str):
-            target_keys = set(target_keys)
+        
+        if target_keys is None:
+            target_keys = set()
+        elif isinstance(target_keys, str):
+            target_keys = {target_keys}
         else:
-            target_keys = [target_keys]
+            try:
+                target_keys = set(target_keys)
+            except (TypeError, ValueError):
+                target_keys = {target_keys}
+        
         for item in lst:
             if found:
                 if isinstance(item, str):
@@ -81,11 +103,8 @@ class BaseHandler(ABC):
                 result.append(item)
             elif item in target_keys:
                 found = True
+        
         return result
-
-    @classmethod
-    def _add_nodal_mass(cls, tag: int, mass: float):
-        cls.nodal_mass[tag] += mass
 
     # ------------------------------------------------------------------
     # Universal command-line like argument parser
@@ -206,4 +225,4 @@ class BaseHandler(ABC):
     # Convenience helper so that concrete handlers can do::
     #     parsed = self._parse(func_name, *args, **kwargs)
     def _parse(self, func_name: str, *args, **kwargs):
-        return self.__class__.parse_command(func_name, args, kwargs)
+        return self.parse_command(func_name, args, kwargs)

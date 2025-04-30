@@ -178,3 +178,17 @@ def test_handle_zeroLengthImpact3D(element_manager: ElementManager) -> None:
     assert element_data["Kn2"] == 7000.0
     assert element_data["Delta_y"] == 0.05
     assert element_data["cohesion"] == 50.0
+
+def test_handle_unknown_zeroLength(element_manager: ElementManager) -> None:
+    """Test handling unknown elements"""
+    # 设置测试数据
+    cmd = "element"
+    args = ("customzeroLength", 1, *[1, 2], 100.0, 301, "-rho", 1.5, "-cMass", 1, "-doRayleigh", 1)
+    element_manager.handle(cmd, {"args": args, "kwargs": {}})
+
+    # 检查元素是否正确存储
+    assert 1 in element_manager.elements
+    element_data = element_manager.elements[1]
+    assert element_data["eleType"] == "customzeroLength"
+    assert element_data["eleTag"] == 1
+    assert "args" in element_data  # 未知元素应该将额外参数保存在args中

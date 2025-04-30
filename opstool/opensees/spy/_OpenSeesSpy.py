@@ -23,7 +23,7 @@ class HandlerCollection:
                 self.add(h,h_name)
             return
 
-        handler_name: str = handler.__class__.__name__ if not name else name
+        handler_name: str = name if name else handler.__class__.__name__
         if handler_name in self._handlers:
             # Can log a warning or raise an error to handle duplicate names if needed
             print(f"Warning: Handler named '{handler_name}' already exists. It will be overwritten.")
@@ -35,18 +35,18 @@ class HandlerCollection:
             return self._handlers[name]
         # Delegate to default attribute access if name starts with underscore or is not a handler name
         if name.startswith('_'):
-             raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+             raise AttributeError(name)
         try:
             return self._handlers[name]
-        except KeyError:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        except KeyError as e:
+            raise AttributeError(name) from e
 
     def __getitem__(self, key: str) -> BaseHandler:
         """Allow accessing handlers using dictionary key syntax (e.g., collection['NodeManager'])."""
         try:
             return self._handlers[key]
-        except KeyError:
-            raise KeyError(f"Handler with key '{key}' not found")
+        except KeyError as e:
+            raise KeyError(key) from e
 
     def __iter__(self) -> Iterator[BaseHandler]:
         """Allow iterating over handlers (e.g., for handler in collection:)."""

@@ -1,54 +1,65 @@
-from ._BaseHandler import BaseHandler
+from collections import defaultdict
 from typing import Any, Optional
+
+from ._BaseHandler import BaseHandler
 
 
 class ElementManager(BaseHandler):
     def __init__(self):
         self.elements = {}
-        self.element_nodes = {}  # 存储元素节点连接关系
+        self.zerolength = {}
+        self.truss = {}
+        self.beamcolumn = {}
+        self.joint = {}
+        self.link = {}
+        self.bearing = {}
+        self.quadrilateral = {}
+        self.triangular = {}
+        self.brick = {}
+        self.tetrahedron = {}
+        self.ucsd_up = {}
+        self.other_up = {}
+        self.contact = {}
+        self.cable = {}
+        self.pfem = {}
+        self.misc = {}
+
+    @property
+    def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
+        # element(eleType, tag, *eleNodes, *eleArgs)
+        alternative_rules = defaultdict({"positional": ["eleType", "tag", "args*"]})
+
+        # add rule for different element types
+        alternative_rules["zerolength"] = {
+            "positional": ["eleType", "tag", "eleNodes*1", "-mat", "mats*", "-dir", "dirs*"],
+            "options": {
+                "-mat": "mats*",
+                "-dir": "dirs*"
+            }
+        }
+        return {
+            # node(nodeTag, *crds, '-ndf', ndf, '-mass', *mass, '-disp', ...)
+            "element": alternative_rules
+        }
 
     def handles(self):
         return ["element"]
 
     def handle(self, func_name: str, arg_map: dict[str, Any]):
-        tag = int(arg_map.get("tag", 0))
-        if tag == 0:
-            return
+        args,kwargs = arg_map.get("args"),arg_map.get("kwargs")
+        if func_name == "node":
+            self._handle_node(*args,**kwargs)
+        elif func_name == "mass":
+            self._handle_mass(*args,**kwargs)
+        elif func_name == "model":
+            self._handle_model(*args,**kwargs)
+        else:
+            self.handle_unknown_element(*args,**kwargs)
 
-        typeName = arg_map.get("typeName", "")
-        args = arg_map.get("args", [])
+    def handle_unknown_element(self, *args, **kwargs):
+        """处理未知元素"""
+        pass
 
-        # 根据元素类型分发到对应的处理函数
-        handler = getattr(self, f"_handle_{typeName}", self._handle_default)
-        element_data = handler(tag, *args)
-
-        if element_data:
-            self.elements[tag] = element_data
-
-            # 记录元素节点连接关系
-            if "nodes" in element_data:
-                self.element_nodes[tag] = element_data["nodes"]
-
-    def _handle_default(self, tag: int, *args) -> dict[str, Any]:
-        """默认处理函数，尝试提取节点信息"""
-        if len(args) >= 2:
-            try:
-                # 假设前两个参数是节点标签
-                nodes = [int(args[0]), int(args[1])]
-                return {"type": "Unknown", "nodes": nodes}
-            except (ValueError, IndexError):
-                pass
-        return {"type": "Unknown"}
-
-    def _handle_Truss(self, tag: int, *args) -> dict[str, Any]:
-        """处理桁架单元"""
-        if len(args) < 4:
-            return self._handle_default(tag, *args)
-
-        try:
-            return {"type": "Truss", "nodes": [int(args[0]), int(args[1])], "A": float(args[2]), "matTag": int(args[3])}
-        except (ValueError, IndexError):
-            return self._handle_default(tag, *args)
 
     def _handle_elasticBeamColumn(self, tag: int, *args) -> dict[str, Any]:
         """处理弹性梁柱单元"""

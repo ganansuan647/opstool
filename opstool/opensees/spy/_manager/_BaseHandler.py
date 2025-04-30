@@ -1,4 +1,6 @@
+import warnings
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Any, Union
 
 
@@ -19,7 +21,7 @@ class BaseHandler(ABC):
         Example(OpenSeesPy Commands):
             node(nodeTag, *crds, '-ndf', ndf, '-mass', *mass, '-disp', ...)
             mass(nodeTag, *massValues)
-            element(typeName, tag, *args)
+            element(eleType, tag, *eleNodes, *eleArgs)
             uniaxialMaterial(matType, matTag, *matArgs)
             timeSeries(typeName, tag, *args)
             load(tag, *args)
@@ -39,7 +41,7 @@ class BaseHandler(ABC):
                 "positional": ["tag", "mass*"],
             },
             "element": {
-                "positional": ["typeName", "tag", "args*"],
+                "positional": ["eleType", "tag", "args*"],
             },
             "uniaxialMaterial": {
                 "positional": ["matType", "matTag", "args*"],
@@ -152,9 +154,7 @@ class BaseHandler(ABC):
         return generic
 
     @staticmethod
-    def _parse_rule_based_command(
-        rule: dict[str, Any], args: tuple[Any, ...], kwargs: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _parse_rule_based_command(rule: dict[str, Any], *args: Any, **kwargs:Any) -> dict[str, Any]:
         """Parse command arguments according to a specific rule."""
         result: dict[str, Any] = {}
         arg_list: list[Any] = [x for x in list(args) if x != {} and x is not None]
@@ -254,35 +254,40 @@ class BaseHandler(ABC):
     # Universal command-line like argument parser
     # ------------------------------------------------------------------
     def parse_command(self, func_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        """Parse *args* / *kwargs* of an OpenSeesPy *func_name* call into a
-        dictionary according to :pyattr:`_COMMAND_RULES`.
+        """
+        Parse OpenSeesPy command arguments (*args, **kwargs*) into a standardized dictionary.
 
-        The method follows *Tcl-style* rules that OpenSeesPy adopts:
-        1.  The command name determines a fixed ordered set of *positional*
-            arguments followed by an arbitrary remainder.  A name ending in
-            ``*`` in :pyattr:`_COMMAND_RULES` absorbs *all remaining* tokens
-            into a list.
-        2.  *Flag*-style options (e.g. ``'-mass'``) are extracted together with
-            their subsequent numeric values until the next string token is met.
-        3.  Any *kwargs* supplied by the caller override values parsed from
-            *args*.
+        Rules:
+            1. The command name determines how positional arguments are assigned via :pyattr:`_COMMAND_RULES`.
+               Names ending with "*" absorb all remaining arguments as a list.
+            2. Flag-style (e.g. '-mass') options are parsed with their associated values, following TCL conventions.
+            3. Any explicit **kwargs take precedence over parsed values.
 
-        If the command does not appear in :pyattr:`_COMMAND_RULES` we still try
-        to extract something meaningful by applying a few heuristics that
-        reflect common OpenSeesPy conventions.  We *do not* attempt to be
-        perfect, just sufficiently useful for most handlers.
+        If the command is not found in :pyattr:`_COMMAND_RULES`, a default parser is used to extract
+        flags and positional arguments, aiming for practical compatibility with typical OpenSeesPy usage.
+
+        Returns:
+            dict[str, Any]: Parsed argument mapping for the handler.
         """
         kwargs = dict(kwargs or {})  # copy to avoid mutating caller data
         rule = self._COMMAND_RULES.get(func_name)
 
         # If we have no dedicated rule, use generic parsing
         if rule is None:
-            return self._parse_generic_command(args, kwargs)
+            return self._parse_generic_command(*args, **kwargs)
 
-        # Otherwise use rule-based parsing
-        return self._parse_rule_based_command(rule, args, kwargs)
+        # If rule has alternatives, means this command has many alternative rules, so need to check which rule to use
+        alternative = rule.get("alternatives", False)
+        if alternative:
+            if not isinstance(rule, defaultdict):
+                warnings.warn(f"Rule for command {func_name} is not a defaultdict; unexpected behavior may occur.", UserWarning, stacklevel=2)
+            specific_rule = rule.get(args[0], {"positional": ["args*"]})    # specific_rule == {"positional": ["args*"]} should never be used
+            return self._parse_rule_based_command(specific_rule, *args, **kwargs)
+
+        # Otherwise use rule-based parsing directly
+        return self._parse_rule_based_command(rule, *args, **kwargs)
 
     # Convenience helper so that concrete handlers can do::
     #     parsed = self._parse(func_name, *args, **kwargs)
     def _parse(self, func_name: str, *args, **kwargs):
-        return self.parse_command(func_name, *args, *kwargs)
+        return self.parse_command(func_name, *args, **kwargs)

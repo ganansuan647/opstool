@@ -23,10 +23,10 @@ def test_handle_zeroLength(element_manager: ElementManager) -> None:
     # 检查节点是否正确存储
     assert 1 in element_manager.zerolength
     element_data = element_manager.zerolength[1]
-    assert element_data["type"] == "zeroLength"
-    assert element_data["nodes"] == [1, 20]
-    assert element_data["mat"] == [911, 923]
-    assert element_data["dir"] == [1, 5]
+    assert element_data["eleType"] == "zeroLength"
+    assert element_data["eleNodes"] == [1, 20]
+    assert element_data["matTags"] == [911, 923]
+    assert element_data["dirs"] == [1, 5]
     assert element_data["rFlag"] == 0
     assert element_data["vecx"] == [0,0,1]
     assert element_data["vecyp"] == [1,1,1]

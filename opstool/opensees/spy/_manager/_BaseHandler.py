@@ -3,18 +3,55 @@ from typing import Any, Union
 
 
 class BaseHandler(ABC):
-    # A minimal set of parsing rules for the most commonly used OpenSeesPy
-    # commands.  Each entry describes how positional arguments should be mapped
-    # and what optional *flag*-style arguments exist.  A trailing ``*`` on the
-    # key name indicates that the value can contain an arbitrary number of
-    # tokens which will be returned as a :class:`list`.
-
     # ---------------------------------------------------------------------
     # Abstract Property - MUST be implemented by subclasses
     # ---------------------------------------------------------------------
     @property
     @abstractmethod
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
+        """
+        A set of parsing rules for the most commonly used OpenSeesPy
+        commands.  Each entry describes how positional arguments should be mapped
+        and what optional *flag*-style arguments exist.  A trailing ``*`` on the
+        key name indicates that the value can contain an arbitrary number of
+        tokens which will be returned as a :class:`list`.
+
+        Example(OpenSeesPy Commands):
+            node(nodeTag, *crds, '-ndf', ndf, '-mass', *mass, '-disp', ...)
+            mass(nodeTag, *massValues)
+            element(typeName, tag, *args)
+            uniaxialMaterial(matType, matTag, *matArgs)
+            timeSeries(typeName, tag, *args)
+            load(tag, *args)
+
+        Example(rule set dict): {
+            "node": {
+                "positional": ["tag", "coords*"],
+                "options": {
+                    "-ndf": "ndf",
+                    "-mass": "mass*",
+                    "-disp": "disp*",
+                    "-vel": "vel*",
+                    "-accel": "accel*",
+                },
+            },
+            "mass": {
+                "positional": ["tag", "mass*"],
+            },
+            "element": {
+                "positional": ["typeName", "tag", "args*"],
+            },
+            "uniaxialMaterial": {
+                "positional": ["matType", "matTag", "args*"],
+            },
+            "timeSeries": {
+                "positional": ["typeName", "tag", "args*"],
+            },
+            "load": {
+                "positional": ["tag", "args*"],
+            },
+        }
+        """
         raise NotImplementedError
 
     # ---------------------------------------------------------------------

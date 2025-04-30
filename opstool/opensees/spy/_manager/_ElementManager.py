@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Any, Optional
 
+import openseespy.opensees as ops
+
 from ._BaseHandler import BaseHandler
 
 
@@ -26,21 +28,25 @@ class ElementManager(BaseHandler):
 
     @property
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
-        # element(eleType, tag, *eleNodes, *eleArgs)
+        # element(eleType, tag, *eleNodes, *eleArgs), use defaultdict to set default rule(simplified)
         alternative_rules = defaultdict({"positional": ["eleType", "tag", "args*"]})
 
         # add rule for different element types
+        ndm = ops.getNDM()
         alternative_rules["zerolength"] = {
-            "positional": ["eleType", "tag", "eleNodes*1", "-mat", "mats*", "-dir", "dirs*"],
+            "positional": ["eleType", "tag", "eleNodes*2"],
             "options": {
-                "-mat": "mats*",
-                "-dir": "dirs*"
+                "-mat": "mat*",
+                "-dir": "dir*",
+                "doRayleigh": "rFlag",
+                "-orient": f"vec*"      # vecx and vecyp
             }
         }
         return {
-            # node(nodeTag, *crds, '-ndf', ndf, '-mass', *mass, '-disp', ...)
+            # element(eleType, tag, *eleNodes, *eleArgs)
             "element": alternative_rules
         }
+
 
     def handles(self):
         return ["element"]

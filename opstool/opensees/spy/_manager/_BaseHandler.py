@@ -1,3 +1,4 @@
+import re
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -203,16 +204,31 @@ class BaseHandler(ABC):
         return result
 
     @staticmethod
+    def get_name_and_count(origin_name: str) -> tuple[str, int]:
+        """Get name and count from a name with count suffix."""
+        if origin_name.endswith('*'):
+            match = re.match(r"(.+?)\*(\d+)$", origin_name)
+            if match:
+                name, count = match.groups()
+                return name, int(count)
+            else:
+                name = origin_name.rstrip('*')
+                return name, "all"
+        return origin_name, 1
+
+    @staticmethod
     def _parse_positional_args(rule: dict[str, Any], arg_list: list[Any]) -> dict[str, Any]:
         """Parse positional arguments according to rule."""
         result: dict[str, Any] = {}
         idx = 0
 
         for name in rule.get("positional", []):
-            is_variadic = name.endswith("*")
-            clean_name = name.rstrip("*")
-
-            if is_variadic:
+            # 检查是否是带有数字限制的参数模式, 如 name*2
+            clean_name, count = BaseHandler.get_name_and_count(name)
+            if isinstance(count, int):
+                result[clean_name] = arg_list[idx] if count == 1 else arg_list[idx:idx + count]
+                idx += count
+            elif isinstance(count,str) and count == "all":
                 # Consume tokens until next recognised option flag (if any)
                 stop_idx = len(arg_list)
                 for flag in rule.get("options", {}):
@@ -222,11 +238,9 @@ class BaseHandler(ABC):
 
                 result[clean_name] = arg_list[idx:stop_idx]
                 idx = stop_idx
-                continue
-
-            if idx < len(arg_list):
-                result[clean_name] = arg_list[idx]
-                idx += 1
+            else:
+                # Handle unknown count format
+                raise ValueError(f"Invalid parameter format for {name}: {count =} must be int or 'all'")
 
         # Store unconsumed positional tokens under "args"
         if idx < len(arg_list):
@@ -242,11 +256,23 @@ class BaseHandler(ABC):
         for flag, name in rule.get("options", {}).items():
             if flag in arg_list:
                 values = BaseHandler._extract_args_by_str(arg_list, flag)
-                if name.endswith("*"):
-                    result[name.rstrip("*")] = values
-                else:
-                    if values:
-                        result[name] = values[0] if len(values) == 1 else values
+                idx = 0
+                stop_idx = len(values)
+                if isinstance(name, str):
+                    name = [name]
+
+                # 这些参数可能对应多个参数,需要分别处理
+                for subname in name:
+                    clean_name, count = BaseHandler.get_name_and_count(subname)
+                    if isinstance(count, int):
+                        result[clean_name] = values[idx] if count == 1 else values[idx:idx+count]
+                        idx += count
+                    elif isinstance(count, str) and count == "all":
+                        result[clean_name] = values[idx:stop_idx] if stop_idx > idx else values[idx]
+                        idx = stop_idx
+                    else:
+                        # Handle unknown count format
+                        raise ValueError(f"Invalid parameter format for {name}: {count =} must be int or 'all'")
 
         return result
 

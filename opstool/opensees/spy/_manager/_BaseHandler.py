@@ -130,32 +130,6 @@ class BaseHandler(ABC):
         return result
 
     @staticmethod
-    def _parse_generic_command(args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
-        """Parse command arguments without a specific rule."""
-        generic: dict[str, Any] = {}
-
-        # First parse flags so we can remove them from positional slice
-        consumed: set[int] = set()
-        for i, token in enumerate(args):
-            if isinstance(token, str) and token.startswith("-"):
-                flag = token.lstrip("-")
-                values = BaseHandler._extract_args_by_str(args[i:], token)
-                generic[flag] = values if len(values) > 1 else (values[0] if values else True)
-                # Mark consumed indices (flag itself plus its values)
-                consumed.add(i)
-                for j in range(1, len(values) + 1):
-                    if i + j < len(args):
-                        consumed.add(i + j)
-
-        # Remaining tokens are considered positional
-        positional_tokens = [tok for idx_, tok in enumerate(args) if idx_ not in consumed]
-        generic["args"] = positional_tokens
-
-        # Merge with kwargs; kwargs has priority
-        generic.update(kwargs)
-        return generic
-
-    @staticmethod
     def _parse_rule_based_command(rule: dict[str, Any], *args: Any, **kwargs:Any) -> dict[str, Any]:
         """Parse command arguments according to a specific rule."""
         result: dict[str, Any] = {}
@@ -310,16 +284,12 @@ class BaseHandler(ABC):
         kwargs = dict(kwargs or {})  # copy to avoid mutating caller data
         rule = self._COMMAND_RULES.get(func_name)
 
-        # If we have no dedicated rule, use generic parsing
-        if rule is None:
-            return self._parse_generic_command(*args, **kwargs)
-
         # If rule has alternatives, means this command has many alternative rules, so need to check which rule to use
         alternative = rule.get("alternative", False)
         if alternative:
             if not isinstance(rule, defaultdict):
                 warnings.warn(f"Rule for command {func_name} is not a defaultdict; unexpected behavior may occur.", UserWarning, stacklevel=2)
-            specific_rule = rule.get(args[0], {"positional": ["args*"]})    # specific_rule == {"positional": ["args*"]} should never be used
+            specific_rule = rule[args[0]]   # if not defaultdict and args[0] is not a key, will raise KeyError
             return self._parse_rule_based_command(specific_rule, *args, **kwargs)
 
         # Otherwise use rule-based parsing directly

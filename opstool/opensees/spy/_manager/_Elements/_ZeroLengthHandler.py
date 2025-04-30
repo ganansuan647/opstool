@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Any
 
 import openseespy.opensees as ops
@@ -17,9 +16,8 @@ class ZeroLengthHandler(BaseHandler):
 
     @property
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
-        ndm = ops.getNDM()[0]
-        rules = defaultdict(lambda: {"positional": ["eleType", "eleTag", "args*"]}.copy())
-        rules["alternative"] = True
+        rules = {"alternative":True}
+
         # ndm for vector if needed
         ndm = ops.getNDM()[0]
         assert len(ops.getNDM()) == 1, f"Invalid length of ndm, expected 1, got {len(ops.getNDM()) =}"  # noqa: S101
@@ -503,17 +501,8 @@ class ZeroLengthHandler(BaseHandler):
         self.elements[eleTag] = eleinfo
 
     def _unknown(self, *args, **kwargs):
-        arg_map = self._parse("element", *args, **kwargs)
-
-        eleType = arg_map.get("eleType")
-        eleTag = arg_map.get("eleTag")
-        args = arg_map.get("args",[])
-        eleinfo = {
-            "eleType": eleType,
-            "eleTag": eleTag,
-            "args": args,
-        }
-        self.elements[eleTag] = eleinfo
+        # should never use this function but use ElementManager.handle_unknown_element()
+        raise NotImplementedError
 
     def clear(self):
         self.elements.clear()

@@ -52,7 +52,7 @@ class NodeManager(BaseHandler):
     def _handle_node(self, *args: Any, **kwargs: Any):
         arg_map = self._parse("node", *args, **kwargs)
 
-        # 使用parse_command处理的结果
+        # 使用_parse处理的结果
         tag = arg_map.get("tag")
         if not tag:
             return
@@ -99,7 +99,7 @@ class NodeManager(BaseHandler):
         self.nodes[tag] = node_info
 
     def _handle_model(self, *args: Any, **kwargs: Any):
-        arg_map = self.parse_command("model", *args, **kwargs)
+        arg_map = self._parse("model", *args, **kwargs)
         # 处理模型维度和自由度设置
         args = arg_map.get("args", [])
 

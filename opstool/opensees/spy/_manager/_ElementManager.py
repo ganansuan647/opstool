@@ -1,8 +1,9 @@
 from collections import defaultdict
+from copy import deepcopy
 from typing import Any, Literal, Optional
 
 from ._BaseHandler import BaseHandler
-from ._Elements import ZeroLengthHandler
+from ._Elements import ZeroLengthHandler, TrussHandler
 
 
 class ElementManager(BaseHandler):
@@ -14,6 +15,7 @@ class ElementManager(BaseHandler):
         self._type2handler: dict[str, BaseHandler] = {}
         handler_classes = [
             ZeroLengthHandler,
+            TrussHandler,
             # TrussHandler, BeamColumnHandler ...
         ]
         for cls in handler_classes:
@@ -22,7 +24,7 @@ class ElementManager(BaseHandler):
     @property
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
         """聚合各子 Handler 的 rule"""
-        merged: dict[str, dict[str, Any]] = defaultdict(lambda: {"positional": ["eleType", "eleTag", "args*"]}.copy())
+        merged: defaultdict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(lambda: deepcopy({"positional": ["eleType", "eleTag", "args*"]})))
         for h in set(self._type2handler.values()):
             for k, v in h._COMMAND_RULES.items():
                 merged[k].update(v)
@@ -38,7 +40,7 @@ class ElementManager(BaseHandler):
         if handler:
             handler.handle(func_name, arg_map)
         else:
-            self._handle_unknown(*arg_map["args"], **arg_map["kwargs"])
+            self.handle_unknown_element(*arg_map["args"], **arg_map["kwargs"])
 
     def handle_unknown_element(self, *args, **kwargs):
         """Handle unknown elements"""
@@ -88,7 +90,7 @@ class ElementManager(BaseHandler):
 
         element_types = {
             "zerolength": ZeroLengthHandler.handles(),
-            # "truss": TrussHandler.handles(),
+            "truss": TrussHandler.handles(),
             # "beamcolumn": BeamColumnHandler.handles(),
             # "joint": JointHandler.handles(),
             # "link": LinkHandler.handles(),

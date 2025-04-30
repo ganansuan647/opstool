@@ -206,12 +206,12 @@ class BaseHandler(ABC):
     @staticmethod
     def get_name_and_count(origin_name: str) -> tuple[str, int]:
         """Get name and count from a name with count suffix."""
-        if origin_name.endswith('*'):
+        if '*' in origin_name:
             match = re.match(r"(.+?)\*(\d+)$", origin_name)
             if match:
                 name, count = match.groups()
                 return name, int(count)
-            else:
+            elif origin_name.endswith("*"):
                 name = origin_name.rstrip('*')
                 return name, "all"
         return origin_name, 1
@@ -221,16 +221,17 @@ class BaseHandler(ABC):
         """Parse positional arguments according to rule."""
         result: dict[str, Any] = {}
         idx = 0
-
+        stop_idx = len(arg_list)
         for name in rule.get("positional", []):
             # 检查是否是带有数字限制的参数模式, 如 name*2
             clean_name, count = BaseHandler.get_name_and_count(name)
             if isinstance(count, int):
+                if idx+count > stop_idx:
+                    raise ValueError(f"Invalid ini value for positional argument {name}: {count =} must be less than {stop_idx-idx}")
                 result[clean_name] = arg_list[idx] if count == 1 else arg_list[idx:idx + count]
                 idx += count
             elif isinstance(count,str) and count == "all":
                 # Consume tokens until next recognised option flag (if any)
-                stop_idx = len(arg_list)
                 for flag in rule.get("options", {}):
                     if flag in arg_list[idx:]:
                         candidate = arg_list.index(flag, idx)
@@ -265,6 +266,9 @@ class BaseHandler(ABC):
                 for subname in name:
                     clean_name, count = BaseHandler.get_name_and_count(subname)
                     if isinstance(count, int):
+                        if idx+count > stop_idx:
+                            raise ValueError(f"Invalid ini value for optional argument {subname}: {count =} must be less than {stop_idx-idx}")
+
                         result[clean_name] = values[idx] if count == 1 else values[idx:idx+count]
                         idx += count
                     elif isinstance(count, str) and count == "all":
@@ -272,7 +276,7 @@ class BaseHandler(ABC):
                         idx = stop_idx
                     else:
                         # Handle unknown count format
-                        raise ValueError(f"Invalid parameter format for {name}: {count =} must be int or 'all'")
+                        raise ValueError(f"Invalid parameter format for {subname}: {count =} must be int or 'all'")
 
         return result
 
@@ -303,7 +307,7 @@ class BaseHandler(ABC):
             return self._parse_generic_command(*args, **kwargs)
 
         # If rule has alternatives, means this command has many alternative rules, so need to check which rule to use
-        alternative = rule.get("alternatives", False)
+        alternative = rule.get("alternative", False)
         if alternative:
             if not isinstance(rule, defaultdict):
                 warnings.warn(f"Rule for command {func_name} is not a defaultdict; unexpected behavior may occur.", UserWarning, stacklevel=2)

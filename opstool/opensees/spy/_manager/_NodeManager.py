@@ -59,7 +59,7 @@ class NodeManager(BaseHandler):
 
         coords = arg_map.get("coords", [])
         ndm = arg_map.get("ndm", self.ndm)
-        ndf = arg_map.get("ndf", self.ndf)  # 使用模型默认值
+        ndf = arg_map.get("ndf", self.ndf)
         mass = arg_map.get("mass", [])
         disp = arg_map.get("disp", [])
         vel = arg_map.get("vel", [])
@@ -68,7 +68,7 @@ class NodeManager(BaseHandler):
         # 保存节点信息
         node_info = {"coords": coords, "ndm": ndm, "ndf": ndf}
 
-        # 如果有质量信息，也保存下来
+        # 如果有质量信息, 也保存下来
         if mass and len(mass) == ndf:
             node_info["mass"] = mass
 

@@ -77,7 +77,7 @@ class OpenSeesSpy:
         # Register handlers here
         self.handlers = HandlerCollection()
         self.handlers.add(NodeManager(),"Node")
-        # self.handlers.add(ElementManager(),"Element")
+        self.handlers.add(ElementManager(),"Element")
         # self.handlers.add(MaterialManager(),"Material")
         # self.handlers.add(TimeSeriesManager(),"TimeSeries")
         # self.handlers.add(LoadManager(),"Load")

@@ -1,6 +1,8 @@
-import pytest
 from typing import Any, Dict, List, Optional
-from opstool.opensees.spy import NodeManager, BaseHandler
+
+import pytest
+
+from opstool.opensees.spy import BaseHandler, NodeManager
 
 
 @pytest.fixture

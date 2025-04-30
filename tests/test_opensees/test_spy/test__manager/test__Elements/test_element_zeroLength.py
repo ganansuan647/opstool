@@ -3,7 +3,7 @@ from typing import Any, Optional
 import openseespy.opensees as ops
 import pytest
 
-from opstool.opensees.spy import BaseHandler, ElementManager
+from opstool.opensees.spy import ElementManager
 
 
 @pytest.fixture
@@ -21,8 +21,8 @@ def test_handle_zeroLength(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 1 in element_manager.zerolength
-    element_data = element_manager.zerolength[1]
+    assert 1 in element_manager.elements
+    element_data = element_manager.elements[1]
     assert element_data["eleType"] == "zeroLength"
     assert element_data["eleNodes"] == [1, 20]
     assert element_data["matTags"] == [911, 923]
@@ -39,8 +39,8 @@ def test_handle_zerolengthND(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 2 in element_manager.zerolengthND
-    element_data = element_manager.zerolengthND[2]
+    assert 2 in element_manager.elements
+    element_data = element_manager.elements[2]
     assert element_data["eleType"] == "zeroLengthND"
     assert element_data["eleTag"] == 2
     assert element_data["eleNodes"] == [3, 4]
@@ -57,8 +57,8 @@ def test_handle_zeroLengthSection(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 10 in element_manager.zerolengthSection
-    element_data = element_manager.zerolengthSection[10]
+    assert 10 in element_manager.elements
+    element_data = element_manager.elements[10]
     assert element_data["eleType"] == "zeroLengthSection"
     assert element_data["eleTag"] == 10
     assert element_data["eleNodes"] == [5, 6]
@@ -74,8 +74,8 @@ def test_handle_CoupledZeroLength(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 11 in element_manager.coupledZeroLength
-    element_data = element_manager.coupledZeroLength[11]
+    assert 11 in element_manager.elements
+    element_data = element_manager.elements[11]
     assert element_data["eleType"] == "CoupledZeroLength"
     assert element_data["eleTag"] == 11
     assert element_data["eleNodes"] == [7, 8]
@@ -91,8 +91,8 @@ def test_handle_zeroLengthContact2D(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 12 in element_manager.zerolengthContact2D
-    element_data = element_manager.zerolengthContact2D[12]
+    assert 12 in element_manager.elements
+    element_data = element_manager.elements[12]
     assert element_data["eleType"] == "zeroLengthContact2D"
     assert element_data["eleTag"] == 12
     assert element_data["eleNodes"] == [9, 10]
@@ -109,8 +109,8 @@ def test_handle_zeroLengthContact3D(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 13 in element_manager.zerolengthContact3D
-    element_data = element_manager.zerolengthContact3D[13]
+    assert 13 in element_manager.elements
+    element_data = element_manager.elements[13]
     assert element_data["eleType"] == "zeroLengthContact3D"
     assert element_data["eleTag"] == 13
     assert element_data["eleNodes"] == [11, 12]
@@ -127,8 +127,8 @@ def test_handle_zeroLengthContactNTS2D(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 14 in element_manager.zerolengthContactNTS2D
-    element_data = element_manager.zerolengthContactNTS2D[14]
+    assert 14 in element_manager.elements
+    element_data = element_manager.elements[14]
     assert element_data["eleType"] == "zeroLengthContactNTS2D"
     assert element_data["eleTag"] == 14
     assert element_data["sNdNum"] == 2
@@ -145,8 +145,8 @@ def test_handle_zeroLengthInterface2D(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 15 in element_manager.zerolengthInterface2D
-    element_data = element_manager.zerolengthInterface2D[15]
+    assert 15 in element_manager.elements
+    element_data = element_manager.elements[15]
     assert element_data["eleType"] == "zeroLengthInterface2D"
     assert element_data["eleTag"] == 15
     assert element_data["sNdNum"] == 2
@@ -165,8 +165,8 @@ def test_handle_zeroLengthImpact3D(element_manager: ElementManager) -> None:
     element_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # Check if the element is correctly stored
-    assert 16 in element_manager.zerolengthImpact3D
-    element_data = element_manager.zerolengthImpact3D[16]
+    assert 16 in element_manager.elements
+    element_data = element_manager.elements[16]
     assert element_data["eleType"] == "zeroLengthImpact3D"
     assert element_data["eleTag"] == 16
     assert element_data["eleNodes"] == [21, 22]

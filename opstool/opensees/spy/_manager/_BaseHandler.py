@@ -60,8 +60,9 @@ class BaseHandler(ABC):
     # ---------------------------------------------------------------------
     # Abstract API - MUST be implemented by subclasses
     # ---------------------------------------------------------------------
+    @staticmethod
     @abstractmethod
-    def handles(self) -> list[str]:
+    def handles() -> list[str]:
         """Return a list of function names this handler can process."""
         raise NotImplementedError
 
@@ -290,7 +291,7 @@ class BaseHandler(ABC):
     # ------------------------------------------------------------------
     # Universal command-line like argument parser
     # ------------------------------------------------------------------
-    def parse_command(self, func_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def _parse(self, func_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """
         Parse OpenSeesPy command arguments (*args, **kwargs*) into a standardized dictionary.
 
@@ -324,7 +325,17 @@ class BaseHandler(ABC):
         # Otherwise use rule-based parsing directly
         return self._parse_rule_based_command(rule, *args, **kwargs)
 
-    # Convenience helper so that concrete handlers can do::
-    #     parsed = self._parse(func_name, *args, **kwargs)
-    def _parse(self, func_name: str, *args, **kwargs):
-        return self.parse_command(func_name, *args, **kwargs)
+    # -----------------------------------------------------------------
+    # registration utility
+    # -----------------------------------------------------------------
+    def _register(self, registry: dict[str, "BaseHandler"]) -> None:
+        """
+        Register all element types this handler can process into the registry.
+
+        Parameters
+        ----------
+        registry : dict[str, BaseHandler]
+            Mapping of {argType: handler} maintained by all kinds of Manager.
+        """
+        for arg_type in self.handles():
+            registry[arg_type] = self

@@ -10,7 +10,6 @@ class ElementManager(BaseHandler):
     def __init__(self):
         self.elements = {}
         self.zerolength = {}
-        self.zerolengthND = {}
         self.truss = {}
         self.beamcolumn = {}
         self.joint = {}
@@ -54,6 +53,59 @@ class ElementManager(BaseHandler):
             }
         }
 
+        alternative_rules["zeroLengthSection"] = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "secTag"],
+            "options": {
+                "-orient": [f"vecx*{ndm}",f"vecyp*{ndm}"],      # vecx and vecyp
+                "-doRayleigh": "rFlag"
+            }
+        }
+
+        alternative_rules["CoupledZeroLength"] = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "dirn1", "dirn2", "matTag", "rFlag?"],
+        }
+
+        alternative_rules["zeroLengthContact2D"] = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "Kn", "Kt", "mu"],
+            "options": {
+                "-normal": ["Nx", "Ny"]
+            }
+        }
+
+        alternative_rules["zeroLengthContact3D"] = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "Kn", "Kt", "mu", "c", "dir"],
+        }
+
+        alternative_rules["zeroLengthContactNTS2D"] = {
+            "positional": ["eleType"],
+            "options": {
+                "-sNdNum": "sNdNum",
+                "-mNdNum": "mNdNum",
+                "-Nodes": "NodesTags*",
+                "kn": "kn",
+                "kt": "kt",
+                "phi": "phi"
+            }
+        }
+
+        alternative_rules["zeroLengthInterface2D"] = {
+            "positional": ["eleType"],
+            "options": {
+                "-sNdNum": "sNdNum",
+                "-mNdNum": "mNdNum",
+                "-dof": ["sdof", "mdof"],
+                "-Nodes": "NodesTags*",
+                "kn": "kn",
+                "kt": "kt",
+                "phi": "phi"
+            }
+        }
+
+        alternative_rules["zeroLengthImpact3D"] = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "direction", "initGap", "frictionRatio",
+                          "Kt", "Kn", "Kn2", "Delta_y", "cohesion"],
+        }
+
         return {
             # element(eleType, tag, *eleNodes, *eleArgs)
             "element": alternative_rules
@@ -72,10 +124,20 @@ class ElementManager(BaseHandler):
             self._handle_zeroLength(*args,**kwargs)
         elif eleType == "zeroLengthND":
             self._handle_zerolengthND(*args,**kwargs)
-        elif eleType == "mass":
-            self._handle_mass(*args,**kwargs)
-        elif eleType == "model":
-            self._handle_model(*args,**kwargs)
+        elif eleType == "zeroLengthSection":
+            self._handle_zeroLengthSection(*args,**kwargs)
+        elif eleType == "CoupledZeroLength":
+            self._handle_CoupledZeroLength(*args,**kwargs)
+        elif eleType == "zeroLengthContact2D":
+            self._handle_zeroLengthContact2D(*args,**kwargs)
+        elif eleType == "zeroLengthContact3D":
+            self._handle_zeroLengthContact3D(*args,**kwargs)
+        elif eleType == "zeroLengthContactNTS2D":
+            self._handle_zeroLengthContactNTS2D(*args,**kwargs)
+        elif eleType == "zeroLengthInterface2D":
+            self._handle_zeroLengthInterface2D(*args,**kwargs)
+        elif eleType == "zeroLengthImpact3D":
+            self._handle_zeroLengthImpact3D(*args,**kwargs)
         else:
             self.handle_unknown_element(*args,**kwargs)
 
@@ -165,7 +227,312 @@ class ElementManager(BaseHandler):
             "vecx": vecx,
             "vecyp": vecyp,
         }
-        self.zerolengthND[eleTag] = eleinfo
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthSection(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthSection` element
+
+        element('zeroLengthSection', eleTag, *eleNodes, secTag, <'-orient', *vecx, *vecyp>, <'-doRayleigh', rFlag>)
+
+        rule = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "secTag"],
+            "options": {
+                "-orient": [f"vecx*{ndm}",f"vecyp*{ndm}"],      # vecx and vecyp
+                "-doRayleigh": "rFlag"
+            }
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = arg_map.get("eleTag")
+        if not eleTag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        secTag = arg_map.get("secTag")
+
+        # optional arguments
+        vecx = arg_map.get("vecx", [])
+        vecyp = arg_map.get("vecyp", [])
+        rFlag = arg_map.get("rFlag", 0)
+
+        # 保存zeroLengthSection单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "eleNodes": eleNodes,
+            "secTag": secTag,
+            "vecx": vecx,
+            "vecyp": vecyp,
+            "rFlag": rFlag,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_CoupledZeroLength(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `CoupledZeroLength` element
+
+        element('CoupledZeroLength', eleTag, *eleNodes, dirn1, dirn2, matTag, <rFlag=1>)
+
+        rule = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "dirn1", "dirn2", "matTag", "rFlag?"],
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = arg_map.get("eleTag")
+        if not eleTag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        dirn1 = arg_map.get("dirn1")
+        dirn2 = arg_map.get("dirn2")
+        matTag = arg_map.get("matTag")
+        rFlag = arg_map.get("rFlag", 0)
+
+        # 保存CoupledZeroLength单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "eleNodes": eleNodes,
+            "dirn1": dirn1,
+            "dirn2": dirn2,
+            "matTag": matTag,
+            "rFlag": rFlag,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthContact2D(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthContact2D` element
+
+        element('zeroLengthContact2D', eleTag, *eleNodes, Kn, Kt, mu, '-normal', Nx, Ny)
+
+        rule = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "Kn", "Kt", "mu"],
+            "options": {
+                "-normal": ["Nx", "Ny"]
+            }
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = arg_map.get("eleTag")
+        if not eleTag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        Kn = arg_map.get("Kn")
+        Kt = arg_map.get("Kt")
+        mu = arg_map.get("mu")
+
+        # optional arguments
+        Nx = arg_map.get("Nx", 0)
+        Ny = arg_map.get("Ny", 0)
+
+        # 保存接触单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "eleNodes": eleNodes,
+            "Kn": Kn,
+            "Kt": Kt,
+            "mu": mu,
+            "Nx": Nx,
+            "Ny": Ny,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthContact3D(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthContact3D` element
+
+        element('zeroLengthContact3D', eleTag, *eleNodes, Kn, Kt, mu, c, dir)
+
+        rule = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "Kn", "Kt", "mu", "c", "dir"],
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = arg_map.get("eleTag")
+        if not eleTag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        Kn = arg_map.get("Kn")
+        Kt = arg_map.get("Kt")
+        mu = arg_map.get("mu")
+        c = arg_map.get("c")
+        dir_val = arg_map.get("dir")  # 重命名为dir_val避免与内置函数冲突
+
+        # 保存接触单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "eleNodes": eleNodes,
+            "Kn": Kn,
+            "Kt": Kt,
+            "mu": mu,
+            "c": c,
+            "dir": dir_val,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthContactNTS2D(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthContactNTS2D` element
+
+        element('zeroLengthContactNTS2D', eleTag, '-sNdNum', sNdNum, '-mNdNum', mNdNum, '-Nodes', *NodesTags, kn, kt, phi)
+
+        rule = {
+            "positional": ["eleType"],
+            "options": {
+                "-sNdNum": "sNdNum",
+                "-mNdNum": "mNdNum",
+                "-Nodes": "NodesTags*",
+                "kn": "kn",
+                "kt": "kt",
+                "phi": "phi"
+            }
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = int(args[1]) if len(args) > 1 else None  # 从原始参数获取标签
+        if not eleTag:
+            return
+
+        # options
+        sNdNum = arg_map.get("sNdNum")
+        mNdNum = arg_map.get("mNdNum")
+        NodesTags = arg_map.get("NodesTags", [])
+        kn = arg_map.get("kn")
+        kt = arg_map.get("kt")
+        phi = arg_map.get("phi")
+
+        # 保存接触单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "sNdNum": sNdNum,
+            "mNdNum": mNdNum,
+            "NodesTags": NodesTags,
+            "kn": kn,
+            "kt": kt,
+            "phi": phi,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthInterface2D(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthInterface2D` element
+
+        element('zeroLengthInterface2D', eleTag, '-sNdNum', sNdNum, '-mNdNum', mNdNum, '-dof', sdof, mdof, '-Nodes', *NodesTags, kn, kt, phi)
+
+        rule = {
+            "positional": ["eleType"],
+            "options": {
+                "-sNdNum": "sNdNum",
+                "-mNdNum": "mNdNum",
+                "-dof": ["sdof", "mdof"],
+                "-Nodes": "NodesTags*",
+                "kn": "kn",
+                "kt": "kt",
+                "phi": "phi"
+            }
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = int(args[1]) if len(args) > 1 else None  # 从原始参数获取标签
+        if not eleTag:
+            return
+
+        # options
+        sNdNum = arg_map.get("sNdNum")
+        mNdNum = arg_map.get("mNdNum")
+        sdof = arg_map.get("sdof")
+        mdof = arg_map.get("mdof")
+        NodesTags = arg_map.get("NodesTags", [])
+        kn = arg_map.get("kn")
+        kt = arg_map.get("kt")
+        phi = arg_map.get("phi")
+
+        # 保存接触单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "sNdNum": sNdNum,
+            "mNdNum": mNdNum,
+            "sdof": sdof,
+            "mdof": mdof,
+            "NodesTags": NodesTags,
+            "kn": kn,
+            "kt": kt,
+            "phi": phi,
+        }
+        self.zerolength[eleTag] = eleinfo
+        self.elements[eleTag] = eleinfo
+
+    def _handle_zeroLengthImpact3D(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthImpact3D` element
+
+        element('zeroLengthImpact3D', eleTag, *eleNodes, direction, initGap, frictionRatio, Kt, Kn, Kn2, Delta_y, cohesion)
+
+        rule = {
+            "positional": ["eleType", "eleTag", "eleNodes*2", "direction", "initGap", "frictionRatio",
+                          "Kt", "Kn", "Kn2", "Delta_y", "cohesion"],
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        eleTag = arg_map.get("eleTag")
+        if not eleTag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        direction = arg_map.get("direction")
+        initGap = arg_map.get("initGap")
+        frictionRatio = arg_map.get("frictionRatio")
+        Kt = arg_map.get("Kt")
+        Kn = arg_map.get("Kn")
+        Kn2 = arg_map.get("Kn2")
+        Delta_y = arg_map.get("Delta_y")
+        cohesion = arg_map.get("cohesion")
+
+        # 保存接触单元信息
+        eleinfo = {
+            "eleType": eleType,
+            "eleTag": eleTag,
+            "eleNodes": eleNodes,
+            "direction": direction,
+            "initGap": initGap,
+            "frictionRatio": frictionRatio,
+            "Kt": Kt,
+            "Kn": Kn,
+            "Kn2": Kn2,
+            "Delta_y": Delta_y,
+            "cohesion": cohesion,
+        }
+        self.zerolength[eleTag] = eleinfo
         self.elements[eleTag] = eleinfo
 
     def get_element(self, eleTag: int) -> Optional[dict]:

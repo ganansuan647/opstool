@@ -3,7 +3,24 @@ from copy import deepcopy
 from typing import Any, Literal, Optional
 
 from ._BaseHandler import BaseHandler
-from ._Elements import ZeroLengthHandler, TrussHandler
+from ._Elements import (
+    ZeroLengthHandler,
+    TrussHandler,
+    BeamColumnHandler,
+    # JointHandler,
+    # LinkHandler,
+    # BearingHandler,
+    # QuadrilateralHandler,
+    # TriangularHandler,
+    # BrickHandler,
+    # TetrahedronHandler,
+    # UcsdUpHandler,
+    # OtherUpHandler,
+    # ContactHandler,
+    # CableHandler,
+    # PfemHandler,
+    # MiscHandler
+)
 
 
 class ElementManager(BaseHandler):
@@ -16,7 +33,20 @@ class ElementManager(BaseHandler):
         handler_classes = [
             ZeroLengthHandler,
             TrussHandler,
-            # TrussHandler, BeamColumnHandler ...
+            BeamColumnHandler,
+            # JointHandler,
+            # LinkHandler,
+            # BearingHandler,
+            # QuadrilateralHandler,
+            # TriangularHandler,
+            # BrickHandler,
+            # TetrahedronHandler,
+            # UcsdUpHandler,
+            # OtherUpHandler,
+            # ContactHandler,
+            # CableHandler,
+            # PfemHandler,
+            # MiscHandler
         ]
         for cls in handler_classes:
             cls(self._type2handler, self.elements)  # 注册 eleType → handler

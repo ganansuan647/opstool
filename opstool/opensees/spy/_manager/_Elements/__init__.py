@@ -1,7 +1,7 @@
 # 元素处理器模块初始化文件
 from ._ZeroLengthHandler import ZeroLengthHandler
 from ._TrussHandler import TrussHandler
-# from ._BeamColumnHandler import BeamColumnHandler
+from ._BeamColumnHandler import BeamColumnHandler
 # from ._JointHandler import JointHandler
 # from ._LinkHandler import LinkHandler
 # from ._BearingHandler import BearingHandler
@@ -19,7 +19,7 @@ from ._TrussHandler import TrussHandler
 __all__ = [
     "ZeroLengthHandler",
     "TrussHandler",
-    # "BeamColumnHandler",
+    "BeamColumnHandler",
     # "JointHandler",
     # "LinkHandler",
     # "BearingHandler",

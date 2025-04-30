@@ -93,8 +93,6 @@ class TrussHandler(BaseHandler):
         # 位置参数
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         A = arg_map.get("A")
         matTag = arg_map.get("matTag")
@@ -137,8 +135,6 @@ class TrussHandler(BaseHandler):
         # 位置参数
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         secTag = arg_map.get("secTag")
 
@@ -179,8 +175,6 @@ class TrussHandler(BaseHandler):
         # 位置参数
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         A = arg_map.get("A")
         matTag = arg_map.get("matTag")
@@ -223,8 +217,6 @@ class TrussHandler(BaseHandler):
         # 位置参数
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         secTag = arg_map.get("secTag")
 

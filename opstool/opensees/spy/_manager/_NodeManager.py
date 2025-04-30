@@ -32,7 +32,7 @@ class NodeManager(BaseHandler):
                 "positional": ["type"],
                 "options": {
                     "-ndm": "ndm",
-                    "-ndf": "ndf",
+                    "-ndf?": "ndf",
                 },
             },
         }
@@ -104,12 +104,13 @@ class NodeManager(BaseHandler):
         args = arg_map.get("args", [])
 
         # 检查是否有维度参数
-        if "ndm" in arg_map:
-            self.ndm = arg_map["ndm"]
+        self.ndm = arg_map["ndm"]
 
         # 检查是否有自由度参数
         if "ndf" in arg_map:
             self.ndf = arg_map["ndf"]
+        else:
+            self.ndf = self.ndm*(self.ndm+1)/2
 
     def get_node_coords(self, tag: int) -> list[float]:
         """获取节点坐标"""

@@ -138,8 +138,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
 
         # optional arguments
@@ -180,8 +178,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         matTag = arg_map.get("matTag")
         uniTag = arg_map.get("uniTag", None)
@@ -221,8 +217,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         secTag = arg_map.get("secTag")
 
@@ -258,8 +252,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         dirn1 = arg_map.get("dirn1")
         dirn2 = arg_map.get("dirn2")
@@ -296,8 +288,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         Kn = arg_map.get("Kn")
         Kt = arg_map.get("Kt")
@@ -335,8 +325,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         Kn = arg_map.get("Kn")
         Kt = arg_map.get("Kt")
@@ -380,8 +368,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = int(args[1]) if len(args) > 1 else None  # 从原始参数获取标签
-        if not eleTag:
-            return
 
         # options
         sNdNum = arg_map.get("sNdNum")
@@ -428,8 +414,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = int(args[1]) if len(args) > 1 else None  # 从原始参数获取标签
-        if not eleTag:
-            return
 
         # options
         sNdNum = arg_map.get("sNdNum")
@@ -472,8 +456,6 @@ class ZeroLengthHandler(BaseHandler):
         # positional arguments
         eleType = arg_map.get("eleType")
         eleTag = arg_map.get("eleTag")
-        if not eleTag:
-            return
         eleNodes = arg_map.get("eleNodes")
         direction = arg_map.get("direction")
         initGap = arg_map.get("initGap")

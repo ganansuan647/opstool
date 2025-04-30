@@ -16,11 +16,11 @@ class NodeManager(BaseHandler):
             "node": {
                 "positional": ["tag", "coords*"],
                 "options": {
-                    "-ndf": "ndf",
-                    "-mass": "mass*",
-                    "-disp": "disp*",
-                    "-vel": "vel*",
-                    "-accel": "accel*",
+                    "-ndf?": "ndf",
+                    "-mass?": "mass*",
+                    "-disp?": "disp*",
+                    "-vel?": "vel*",
+                    "-accel?": "accel*",
                 },
             },
             # mass(nodeTag, *massValues)

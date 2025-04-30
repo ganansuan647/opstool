@@ -10,6 +10,7 @@ class ElementManager(BaseHandler):
     def __init__(self):
         self.elements = {}
         self.zerolength = {}
+        self.zerolengthND = {}
         self.truss = {}
         self.beamcolumn = {}
         self.joint = {}
@@ -42,10 +43,17 @@ class ElementManager(BaseHandler):
             "options": {
                 "-mat": "mat*",
                 "-dir": "dir*",
-                "doRayleigh": "rFlag",
+                "-doRayleigh": "rFlag",
+                "-orient": [f"vecx?*{ndm}",f"vecyp?*{ndm}"],      # vecx and vecyp
+            }
+        }
+        alternative_rules["zeroLengthND"] = {
+            "positional": ["eleType", "tag", "eleNodes*2", "matTag", "uniTag?"],
+            "options": {
                 "-orient": [f"vecx*{ndm}",f"vecyp*{ndm}"],      # vecx and vecyp
             }
         }
+
         return {
             # element(eleType, tag, *eleNodes, *eleArgs)
             "element": alternative_rules
@@ -62,6 +70,8 @@ class ElementManager(BaseHandler):
 
         if eleType == "zeroLength":
             self._handle_zeroLength(*args,**kwargs)
+        elif eleType == "zeroLengthND":
+            self._handle_zerolengthND(*args,**kwargs)
         elif eleType == "mass":
             self._handle_mass(*args,**kwargs)
         elif eleType == "model":
@@ -115,6 +125,47 @@ class ElementManager(BaseHandler):
             "vecyp": vecyp,
         }
         self.zerolength[tag] = eleinfo
+        self.elements[tag] = eleinfo
+
+    def _handle_zerolengthND(self, *args, **kwargs) -> dict[str, Any]:
+        """
+        handle `zeroLengthND` element
+
+        element('zeroLengthND', eleTag, *eleNodes, matTag, <uniTag>, <'-orient', *vecx, vecyp>)
+
+        rule = {
+            "positional": ["eleType", "tag", "eleNodes*2", "matTag", "uniTag?"],
+            "options": {
+                "-orient": [f"vecx*{ndm}",f"vecyp*{ndm}"],      # vecx and vecyp
+            }
+        }
+        """
+        arg_map = self._parse("element", *args, **kwargs)
+
+        # positional arguments
+        eleType = arg_map.get("eleType")
+        tag = arg_map.get("tag")
+        if not tag:
+            return
+        eleNodes = arg_map.get("eleNodes")
+        matTag = arg_map.get("matTag")
+        uniTag = arg_map.get("uniTag", None)
+
+        # optional arguments
+        vecx = arg_map.get("vecx", [])
+        vecyp = arg_map.get("vecyp", [])
+
+        # 保存zeroLengthND单元信息
+        eleinfo = {
+            "type": eleType,
+            "tag": tag,
+            "nodes": eleNodes,
+            "matTag": matTag,
+            "uniTag": uniTag,
+            "vecx": vecx,
+            "vecyp": vecyp,
+        }
+        self.zerolengthND[tag] = eleinfo
         self.elements[tag] = eleinfo
 
     def get_element(self, tag: int) -> Optional[dict]:

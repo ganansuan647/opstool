@@ -210,11 +210,11 @@ class BaseHandler(ABC):
             match = re.match(r"(.+?)\*(\d+)$", origin_name)
             if match:
                 name, count = match.groups()
-                return name, int(count)
+                return name.rstrip('?'), int(count)
             elif origin_name.endswith("*"):
                 name = origin_name.rstrip('*')
-                return name, "all"
-        return origin_name, 1
+                return name.rstrip('?'), "all"
+        return origin_name.rstrip('?'), 1
 
     @staticmethod
     def _parse_positional_args(rule: dict[str, Any], arg_list: list[Any]) -> dict[str, Any]:
@@ -227,16 +227,19 @@ class BaseHandler(ABC):
             clean_name, count = BaseHandler.get_name_and_count(name)
             if isinstance(count, int):
                 if idx+count > stop_idx:
-                    raise ValueError(f"Invalid ini value for positional argument {name}: {count =} must be less than {stop_idx-idx}")
-                result[clean_name] = arg_list[idx] if count == 1 else arg_list[idx:idx + count]
+                    if '?' in name:
+                        count = 0
+                    else:
+                        raise ValueError(f"Invalid ini value for positional argument {name}: {count =} must be less than {stop_idx-idx}")
+                result[clean_name] = arg_list[idx] if count == 1 else None if count == 0 else arg_list[idx:idx + count]
                 idx += count
             elif isinstance(count,str) and count == "all":
                 # Consume tokens until next recognised option flag (if any)
                 for flag in rule.get("options", {}):
-                    if flag in arg_list[idx:]:
-                        candidate = arg_list.index(flag, idx)
+                    pure_flag = flag.split('*')[0].rstrip('?')
+                    if pure_flag in arg_list[idx:]:
+                        candidate = arg_list.index(pure_flag, idx)
                         stop_idx = min(stop_idx, candidate)
-
                 result[clean_name] = arg_list[idx:stop_idx]
                 idx = stop_idx
             else:
@@ -255,8 +258,9 @@ class BaseHandler(ABC):
         result: dict[str, Any] = {}
 
         for flag, name in rule.get("options", {}).items():
-            if flag in arg_list:
-                values = BaseHandler._extract_args_by_str(arg_list, flag)
+            pure_flag = flag.split('*')[0].rstrip('?')
+            if pure_flag in arg_list:
+                values = BaseHandler._extract_args_by_str(arg_list, pure_flag)
                 idx = 0
                 stop_idx = len(values)
                 if isinstance(name, str):
@@ -267,9 +271,12 @@ class BaseHandler(ABC):
                     clean_name, count = BaseHandler.get_name_and_count(subname)
                     if isinstance(count, int):
                         if idx+count > stop_idx:
-                            raise ValueError(f"Invalid ini value for optional argument {subname}: {count =} must be less than {stop_idx-idx}")
+                            if '?' in flag:
+                                count = 0
+                            else:
+                                raise ValueError(f"Invalid ini value for optional argument {subname}: {count =} must be less than {stop_idx-idx}")
 
-                        result[clean_name] = values[idx] if count == 1 else values[idx:idx+count]
+                        result[clean_name] = values[idx] if count == 1 else None if count == 0 else values[idx:idx + count]
                         idx += count
                     elif isinstance(count, str) and count == "all":
                         result[clean_name] = values[idx:stop_idx] if stop_idx > idx else values[idx]

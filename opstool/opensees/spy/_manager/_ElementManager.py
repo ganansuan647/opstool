@@ -19,7 +19,7 @@ from ._Elements import (
     ContactHandler,
     CableHandler,
     PFEMHandler,
-    # MiscHandler
+    MiscHandler
 )
 
 
@@ -46,7 +46,7 @@ class ElementManager(BaseHandler):
             ContactHandler,
             CableHandler,
             PFEMHandler,
-            # MiscHandler
+            MiscHandler
         ]
         for cls in handler_classes:
             cls(self._type2handler, self.elements)  # 注册 eleType → handler
@@ -134,7 +134,7 @@ class ElementManager(BaseHandler):
             "contact": ContactHandler.handles(),
             "cable": CableHandler.handles(),
             "pfem": PFEMHandler.handles(),
-            # "misc": MiscHandler.handles()
+            "misc": MiscHandler.handles()
         }
 
         element_list = []

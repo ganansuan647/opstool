@@ -17,7 +17,7 @@ from ._Elements import (
     UCSDUpHandler,
     OtherUpHandler,
     ContactHandler,
-    # CableHandler,
+    CableHandler,
     # PfemHandler,
     # MiscHandler
 )
@@ -44,7 +44,7 @@ class ElementManager(BaseHandler):
             UCSDUpHandler,
             OtherUpHandler,
             ContactHandler,
-            # CableHandler,
+            CableHandler,
             # PfemHandler,
             # MiscHandler
         ]
@@ -132,7 +132,7 @@ class ElementManager(BaseHandler):
             "ucsd_up": UCSDUpHandler.handles(),
             "other_up": OtherUpHandler.handles(),
             "contact": ContactHandler.handles(),
-            # "cable": CableHandler.handles(),
+            "cable": CableHandler.handles(),
             # "pfem": PfemHandler.handles(),
             # "misc": MiscHandler.handles()
         }

@@ -12,7 +12,7 @@ from ._TetrahedronHandler import TetrahedronHandler
 from ._UCSDUpHandler import UCSDUpHandler
 from ._OtherUpHandler import OtherUpHandler
 from ._ContactHandler import ContactHandler
-# from ._CableHandler import CableHandler
+from ._CableHandler import CableHandler
 # from ._PfemHandler import PfemHandler
 # from ._MiscHandler import MiscHandler
 
@@ -30,7 +30,7 @@ __all__ = [
     "UCSDUpHandler",
     "OtherUpHandler",
     "ContactHandler",
-    # "CableHandler",
+    "CableHandler",
     # "PfemHandler",
     # "MiscHandler",
 ]

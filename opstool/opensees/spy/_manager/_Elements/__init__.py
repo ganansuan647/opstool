@@ -5,7 +5,7 @@ from ._BeamColumnHandler import BeamColumnHandler
 from ._JointHandler import JointHandler
 from ._LinkHandler import LinkHandler
 from ._BearingHandler import BearingHandler
-# from ._QuadrilateralHandler import QuadrilateralHandler
+from ._QuadrilateralHandler import QuadrilateralHandler
 # from ._TriangularHandler import TriangularHandler
 # from ._BrickHandler import BrickHandler
 # from ._TetrahedronHandler import TetrahedronHandler
@@ -23,7 +23,7 @@ __all__ = [
     "JointHandler",
     "LinkHandler",
     "BearingHandler",
-    # "QuadrilateralHandler",
+    "QuadrilateralHandler",
     # "TriangularHandler",
     # "BrickHandler",
     # "TetrahedronHandler",

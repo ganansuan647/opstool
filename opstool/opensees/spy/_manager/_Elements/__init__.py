@@ -11,7 +11,7 @@ from ._BrickHandler import BrickHandler
 from ._TetrahedronHandler import TetrahedronHandler
 from ._UCSDUpHandler import UCSDUpHandler
 from ._OtherUpHandler import OtherUpHandler
-# from ._ContactHandler import ContactHandler
+from ._ContactHandler import ContactHandler
 # from ._CableHandler import CableHandler
 # from ._PfemHandler import PfemHandler
 # from ._MiscHandler import MiscHandler
@@ -29,7 +29,7 @@ __all__ = [
     "TetrahedronHandler",
     "UCSDUpHandler",
     "OtherUpHandler",
-    # "ContactHandler",
+    "ContactHandler",
     # "CableHandler",
     # "PfemHandler",
     # "MiscHandler",

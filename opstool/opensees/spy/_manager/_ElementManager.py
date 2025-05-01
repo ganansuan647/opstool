@@ -16,7 +16,7 @@ from ._Elements import (
     TetrahedronHandler,
     UCSDUpHandler,
     OtherUpHandler,
-    # ContactHandler,
+    ContactHandler,
     # CableHandler,
     # PfemHandler,
     # MiscHandler
@@ -43,7 +43,7 @@ class ElementManager(BaseHandler):
             TetrahedronHandler,
             UCSDUpHandler,
             OtherUpHandler,
-            # ContactHandler,
+            ContactHandler,
             # CableHandler,
             # PfemHandler,
             # MiscHandler
@@ -131,7 +131,7 @@ class ElementManager(BaseHandler):
             "tetrahedron": TetrahedronHandler.handles(),
             "ucsd_up": UCSDUpHandler.handles(),
             "other_up": OtherUpHandler.handles(),
-            # "contact": ContactHandler.handles(),
+            "contact": ContactHandler.handles(),
             # "cable": CableHandler.handles(),
             # "pfem": PfemHandler.handles(),
             # "misc": MiscHandler.handles()

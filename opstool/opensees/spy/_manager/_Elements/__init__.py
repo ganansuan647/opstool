@@ -13,7 +13,7 @@ from ._UCSDUpHandler import UCSDUpHandler
 from ._OtherUpHandler import OtherUpHandler
 from ._ContactHandler import ContactHandler
 from ._CableHandler import CableHandler
-# from ._PfemHandler import PfemHandler
+from ._PFEMHandler import PFEMHandler
 # from ._MiscHandler import MiscHandler
 
 __all__ = [
@@ -31,6 +31,6 @@ __all__ = [
     "OtherUpHandler",
     "ContactHandler",
     "CableHandler",
-    # "PfemHandler",
+    "PFEMHandler",
     # "MiscHandler",
 ]

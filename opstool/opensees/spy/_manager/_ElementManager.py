@@ -18,7 +18,7 @@ from ._Elements import (
     OtherUpHandler,
     ContactHandler,
     CableHandler,
-    # PfemHandler,
+    PFEMHandler,
     # MiscHandler
 )
 
@@ -45,7 +45,7 @@ class ElementManager(BaseHandler):
             OtherUpHandler,
             ContactHandler,
             CableHandler,
-            # PfemHandler,
+            PFEMHandler,
             # MiscHandler
         ]
         for cls in handler_classes:
@@ -133,7 +133,7 @@ class ElementManager(BaseHandler):
             "other_up": OtherUpHandler.handles(),
             "contact": ContactHandler.handles(),
             "cable": CableHandler.handles(),
-            # "pfem": PfemHandler.handles(),
+            "pfem": PFEMHandler.handles(),
             # "misc": MiscHandler.handles()
         }
 

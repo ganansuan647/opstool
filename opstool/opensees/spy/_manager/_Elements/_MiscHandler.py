@@ -2,10 +2,10 @@ from typing import Any
 
 import openseespy.opensees as ops
 
-from .._BaseHandler import BaseHandler
+from .._BaseHandler import SubBaseHandler
 
 
-class MiscHandler(BaseHandler):
+class MiscHandler(SubBaseHandler):
     def __init__(self, registry: dict[str, dict], element_store: dict[int, dict]):
         """
         registry: eleType → handler  的全局映射 (供 manager 生成)
@@ -54,9 +54,12 @@ class MiscHandler(BaseHandler):
         }
         return {"element": rules}
 
-    # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return [
             "SurfaceLoad", "VS3D4", "AC3D8", "ASI3D8", "AV3D4", "MasonPan12"
         ]

@@ -1,7 +1,7 @@
 import functools
 import types
 from collections import defaultdict
-from typing import Union, Iterator, Optional,Any
+from typing import Any, Iterator, Optional, Union
 
 from ._manager import BaseHandler, ElementManager, LoadManager, MaterialManager, NodeManager, TimeSeriesManager
 

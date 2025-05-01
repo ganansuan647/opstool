@@ -2,10 +2,10 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Any
 
-from .._BaseHandler import BaseHandler
+from .._BaseHandler import SubBaseHandler
 
 
-class JointHandler(BaseHandler):
+class JointHandler(SubBaseHandler):
     def __init__(self, registry: dict[str, dict], element_store: dict[int, dict]):
         """
         registry: eleType → handler  的全局映射 (供 manager 生成)
@@ -38,9 +38,12 @@ class JointHandler(BaseHandler):
 
         return {"element": rules}
 
-    # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return [
             "beamColumnJoint", "ElasticTubularJoint", "Joint2D",
         ]

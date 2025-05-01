@@ -53,9 +53,12 @@ class UCSDUpHandler(BaseHandler):
             raise NotImplementedError(f"Invalid {ndm =} for UCSD UP elements")
         return {"element": rules}
 
-    # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return [
             "quadUP", "brickUP", "bbarQuadUP", "bbarBrickUP", "9_4_QuadUP", "20_8_BrickUP"
         ]

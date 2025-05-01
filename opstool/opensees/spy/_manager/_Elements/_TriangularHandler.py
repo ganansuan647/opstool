@@ -2,10 +2,10 @@ from typing import Any
 
 import openseespy.opensees as ops
 
-from .._BaseHandler import BaseHandler
+from .._BaseHandler import SubBaseHandler
 
 
-class TriangularHandler(BaseHandler):
+class TriangularHandler(SubBaseHandler):
     def __init__(self, registry: dict[str, dict], element_store: dict[int, dict]):
         """
         registry: eleType → handler  的全局映射 (供 manager 生成)
@@ -29,10 +29,15 @@ class TriangularHandler(BaseHandler):
         }
         return {"element": rules}
 
-    # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
-        return ["Tri31"]
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
+        return [
+            "Tri31"
+        ]
 
     def handle(self, func_name: str, arg_map: dict[str, Any]):
         args, kwargs = arg_map["args"], arg_map["kwargs"]

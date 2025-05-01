@@ -28,8 +28,8 @@ class ElementManager(BaseHandler):
         # 统一数据仓库
         self.elements: dict[int, dict] = {}
 
-        # 构建 handler 映射
-        self._type2handler: dict[str, BaseHandler] = {}
+        # 构建 “命令 -> {eleType -> handler}” 映射
+        self._command2typehandler: dict[str, dict[str, BaseHandler]] = defaultdict(dict)
         handler_classes = [
             ZeroLengthHandler,
             TrussHandler,
@@ -49,15 +49,18 @@ class ElementManager(BaseHandler):
             MiscHandler
         ]
         for cls in handler_classes:
-            cls(self._type2handler, self.elements)  # 注册 eleType → handler
+            cmd = cls.handles()[0]
+            for typ in cls.types():
+                self._command2typehandler[cmd][typ] = cls(self._command2typehandler[cmd], self.elements)
 
     @property
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
         """聚合各子 Handler 的 rule"""
         merged: defaultdict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(lambda: deepcopy({"positional": ["eleType", "eleTag", "args*"]})))
-        for h in set(self._type2handler.values()):
-            for k, v in h._COMMAND_RULES.items():
-                merged[k].update(v)
+        for t2h in self._command2typehandler.values():
+            for h in set(t2h.values()):
+                for k, v in h._COMMAND_RULES.items():
+                    merged[k].update(v)
         return merged
 
     @staticmethod
@@ -66,7 +69,8 @@ class ElementManager(BaseHandler):
 
     def handle(self, func_name: str, arg_map: dict[str, Any]):
         eleType = arg_map["args"][0]
-        handler = self._type2handler.get(eleType)
+        registry = self._command2typehandler.get(func_name, {})
+        handler = registry.get(eleType)
         if handler:
             handler.handle(func_name, arg_map)
         else:

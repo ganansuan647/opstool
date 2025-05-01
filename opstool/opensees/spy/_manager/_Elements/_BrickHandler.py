@@ -2,10 +2,10 @@ from typing import Any
 
 import openseespy.opensees as ops
 
-from .._BaseHandler import BaseHandler
+from .._BaseHandler import SubBaseHandler
 
 
-class BrickHandler(BaseHandler):
+class BrickHandler(SubBaseHandler):
     def __init__(self, registry: dict[str, dict], element_store: dict[int, dict]):
         """
         registry: eleType → handler  的全局映射 (供 manager 生成)
@@ -37,9 +37,12 @@ class BrickHandler(BaseHandler):
 
         return {"element": rules}
 
-    # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return [
             "stdBrick", "bbarBrick", "20NodeBrick", "SSPbrick"
         ]

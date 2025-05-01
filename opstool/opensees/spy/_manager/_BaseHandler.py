@@ -66,6 +66,12 @@ class BaseHandler(ABC):
         """Return a list of function names this handler can process."""
         raise NotImplementedError
 
+    @staticmethod
+    @abstractmethod
+    def handles() -> list[str]:
+        """返回该处理器支持的命令列表(如 element / uniaxialMaterial / nDMaterial)"""
+        raise NotImplementedError
+
     @abstractmethod
     def handle(self, func_name: str, arg_map: dict[str, Any]):
         """Process the function *func_name* using the already parsed *arg_map*."""
@@ -300,12 +306,19 @@ class BaseHandler(ABC):
     # -----------------------------------------------------------------
     def _register(self, registry: dict[str, "BaseHandler"]) -> None:
         """
-        Register all element types this handler can process into the registry.
+        注册该处理器可处理的类型到注册表中
 
         Parameters
         ----------
         registry : dict[str, BaseHandler]
-            Mapping of {argType: handler} maintained by all kinds of Manager.
+            Manager维护的 {类型: 处理器} 映射
         """
-        for arg_type in self.handles():
+        for arg_type in self.types():
             registry[arg_type] = self
+
+class SubBaseHandler(BaseHandler):
+    @staticmethod
+    @abstractmethod
+    def types() -> list[str]:
+        """返回该处理器支持的类型列表(如 element命令的eleType 或 material命令的matType)"""
+        raise NotImplementedError

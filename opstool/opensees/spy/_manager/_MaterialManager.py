@@ -1,18 +1,90 @@
+from collections import defaultdict
+from copy import deepcopy
+from typing import Any, Literal, Optional
+
 from ._BaseHandler import BaseHandler
+from ._Materials import NDMaterialHandler, UniaxialMaterialHandler
 
 
 class MaterialManager(BaseHandler):
     def __init__(self):
-        self.materials = {}
+        # 统一数据仓库
+        self.materials: dict[int, dict] = {}
 
-    def handles(self):
-        return ["uniaxialMaterial"]
+        # 构建 “命令 -> {matType -> handler}” 映射
+        self._command2typehandler: dict[str, dict[str, BaseHandler]] = defaultdict(dict)
+        handler_classes = [
+            UniaxialMaterialHandler,
+            NDMaterialHandler
+        ]
+        for cls in handler_classes:
+            cmd = cls.handles()[0]  # 目前每个处理器只支持一个命令
+            for typ in cls.types():
+                self._command2typehandler[cmd][typ] = cls(self._command2typehandler[cmd], self.materials)
 
-    def handle(self, func_name, arg_map):
-        tag = int(arg_map["matTag"])
-        mat_type = arg_map["matType"]
-        params = arg_map["args"]
-        self.materials[tag] = {"type": mat_type, "params": params}
+    @property
+    def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
+        """聚合各子 Handler 的 rule"""
+        merged: defaultdict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(lambda: deepcopy({"positional": ["matType", "matTag", "args*"]})))
+        for t2h in self._command2typehandler.values():
+            for h in set(t2h.values()):
+                for k, v in h._COMMAND_RULES.items():
+                    merged[k].update(v)
+        return merged
+
+    @staticmethod
+    def handles():
+        return ["uniaxialMaterial", "nDMaterial"]
+
+    def handle(self, func_name: str, arg_map: dict[str, Any]):
+        matType = arg_map["matType"]
+        registry = self._command2typehandler.get(func_name, {})
+        handler = registry.get(matType)
+        if handler:
+            handler.handle(func_name, arg_map)
+        else:
+            self.handle_unknown_material(func_name, arg_map)
+
+    def handle_unknown_material(self, func_name: str, arg_map: dict[str, Any]):
+        """Handle unknown material types"""
+        matTag = int(arg_map.get("matTag"))
+        matType = arg_map.get("matType")
+        args = arg_map.get("args", [])
+        matinfo = {
+            "matType": matType,
+            "matTag": matTag,
+            "args": args,
+            "materialCommandType": func_name  # uniaxialMaterial 或 nDMaterial
+        }
+        self.materials[matTag] = matinfo
+
+    def get_material(self, matTag: int) -> Optional[dict]:
+        """Get material information by tag"""
+        return self.materials.get(matTag)
+
+    def get_materials_by_type(self, matType: str) -> list[int]:
+        """Get all materials of the specified type"""
+        return [tag for tag, data in self.materials.items() if data.get("matType", "").lower() == matType.lower()]
+
+    def get_materials_by_command_type(self, command_type: Literal["uniaxialMaterial", "nDMaterial"]) -> list[int]:
+        """Get all materials created by the specified command type"""
+        return [tag for tag, data in self.materials.items() if data.get("materialCommandType", "") == command_type]
+
+    def get_materials(
+            self,
+            Type: Optional[Literal["uniaxial", "nd"]] = None
+        ):
+        """Get materials by type category"""
+        if Type is None:
+            return self.materials
+
+        material_types = {
+            "uniaxial": "uniaxialMaterial",
+            "nd": "nDMaterial"
+        }
+
+        return {tag: data for tag, data in self.materials.items()
+                if data.get("materialCommandType", "") == material_types.get(Type, "")}
 
     def clear(self):
         self.materials.clear()

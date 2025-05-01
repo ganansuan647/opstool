@@ -1,10 +1,10 @@
 from typing import Any
 
-from .._BaseHandler import BaseHandler
+from .._BaseHandler import SubBaseHandler
 
 
-class TrussHandler(BaseHandler):
-    def __init__(self, registry: dict[str, "BaseHandler"], element_store: dict[int, dict]):
+class TrussHandler(SubBaseHandler):
+    def __init__(self, registry: dict[str, dict], element_store: dict[int, dict]):
         """
         registry: eleType → handler 的全局映射 (供 manager 生成)
         element_store: ElementManager.elements 共享引用
@@ -60,7 +60,12 @@ class TrussHandler(BaseHandler):
 
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return ["Truss", "TrussSection", "corotTruss", "corotTrussSection"]
+
 
     def handle(self, func_name: str, arg_map: dict[str, Any]):
         args, kwargs = arg_map["args"], arg_map["kwargs"]

@@ -96,6 +96,10 @@ class ZeroLengthHandler(BaseHandler):
     # ---------- eleType to handle ----------
     @staticmethod
     def handles() -> list[str]:
+        return ["element"]
+
+    @staticmethod
+    def types() -> list[str]:
         return [
             "zeroLength", "zeroLengthND", "zeroLengthSection",
             "CoupledZeroLength", "zeroLengthContact2D",

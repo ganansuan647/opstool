@@ -3,7 +3,7 @@ from ._ZeroLengthHandler import ZeroLengthHandler
 from ._TrussHandler import TrussHandler
 from ._BeamColumnHandler import BeamColumnHandler
 from ._JointHandler import JointHandler
-# from ._LinkHandler import LinkHandler
+from ._LinkHandler import LinkHandler
 # from ._BearingHandler import BearingHandler
 # from ._QuadrilateralHandler import QuadrilateralHandler
 # from ._TriangularHandler import TriangularHandler
@@ -21,7 +21,7 @@ __all__ = [
     "TrussHandler",
     "BeamColumnHandler",
     "JointHandler",
-    # "LinkHandler",
+    "LinkHandler",
     # "BearingHandler",
     # "QuadrilateralHandler",
     # "TriangularHandler",

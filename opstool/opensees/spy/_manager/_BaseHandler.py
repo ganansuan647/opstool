@@ -287,8 +287,8 @@ class BaseHandler(ABC):
         # If rule has alternatives, means this command has many alternative rules, so need to check which rule to use
         alternative = rule.get("alternative", False)
         if alternative:
-            if not isinstance(rule, defaultdict):
-                warnings.warn(f"Rule for command {func_name} is not a defaultdict; unexpected behavior may occur.", UserWarning, stacklevel=2)
+            # if not isinstance(rule, defaultdict):
+            #     warnings.warn(f"Rule for command {func_name} is not a defaultdict; unexpected behavior may occur.", UserWarning, stacklevel=2)
             specific_rule = rule[args[0]]   # if not defaultdict and args[0] is not a key, will raise KeyError
             return self._parse_rule_based_command(specific_rule, *args, **kwargs)
 

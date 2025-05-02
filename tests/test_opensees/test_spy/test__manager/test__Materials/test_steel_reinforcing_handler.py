@@ -205,7 +205,7 @@ def test_handle_RambergOsgoodSteel(material_manager: MaterialManager) -> None:
 def test_handle_SteelMPF(material_manager: MaterialManager) -> None:
     """测试SteelMPF材料的数据处理"""
     cmd = "uniaxialMaterial"
-    args = ("SteelMPF", 7, 420.0, -420.0, 200000.0, 0.01, 0.01, [10, 0.925, 0.15], 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
+    args = ("SteelMPF", 7, 420.0, -420.0, 200000.0, 0.01, 0.01, [10, 0.925, 0.15], 0.0, 1.0, 0.0, 1.0)
     material_manager.handle(cmd, {"args": args, "kwargs": {}})
 
     # 检查材料是否正确存储

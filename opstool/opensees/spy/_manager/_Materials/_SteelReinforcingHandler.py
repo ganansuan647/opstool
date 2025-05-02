@@ -50,14 +50,13 @@ class SteelReinforcingHandler(SubBaseHandler):
                     }
                 },
                 "Dodd_Restrepo": {
-                    "positional": ["matType", "matTag", "Fy", "Fu", "Es", "Esh", "eps_sh", "eps_ult", "C1?", "C2?", "C3?", "sig_init?"]
+                    "positional": ["matType", "matTag", "Fy", "Fsu", "ESH", "ESU", "Youngs", "ESHI", "FSHI", "OmegaFac?"]
                 },
                 "RambergOsgoodSteel": {
                     "positional": ["matType", "matTag", "fy", "E0", "a", "n"]
                 },
                 "SteelMPF": {
-                    "positional": ["matType", "matTag", "fyp", "fyn", "E0", "bp", "bn", "params", "a1p?", "a2p?", "a3p?", "a4p?",
-                                  "a1n?", "a2n?", "a3n?", "a4n?"]
+                    "positional": ["matType", "matTag", "fyp", "fyn", "E0", "bp", "bn", "params", "a1?", "a2?", "a3?", "a4?"]
                 },
                 "Steel01Thermal": {
                     "positional": ["matType", "matTag", "Fy", "E0", "b", "a1?", "a2?", "a3?", "a4?"]
@@ -115,7 +114,7 @@ class SteelReinforcingHandler(SubBaseHandler):
         optional_params = ["a1", "a2", "a3", "a4"]
         for param in optional_params:
             if param in arg_map:
-                material_info[param] = arg_map.get(param)
+                material_info[param] = arg_map.get(param, 0.0 if param in ["a1", "a3"] else 1.0)
 
         self.materials[matTag] = material_info
         return material_info
@@ -338,7 +337,7 @@ class SteelReinforcingHandler(SubBaseHandler):
 
         # 添加可选参数
         if arg_map.get("OmegaFac"):
-            material_info["OmegaFac"] = arg_map.get("OmegaFac")
+            material_info["OmegaFac"] = arg_map.get("OmegaFac",1.0)
 
         self.materials[matTag] = material_info
         return material_info
@@ -398,8 +397,8 @@ class SteelReinforcingHandler(SubBaseHandler):
         # 添加可选参数
         optional_params = ["a1", "a2", "a3", "a4"]
         for param in optional_params:
-            if arg_map.get(param):
-                material_info[param] = arg_map.get(param)
+            if arg_map.get(param, None) is not None:
+                material_info[param] = arg_map.get(param, 0.0 if param in ["a1", "a3"] else 1.0)
 
         self.materials[matTag] = material_info
         return material_info
@@ -428,7 +427,7 @@ class SteelReinforcingHandler(SubBaseHandler):
         # 添加可选参数
         optional_params = ["a1", "a2", "a3", "a4"]
         for param in optional_params:
-            if param in arg_map:
+            if arg_map.get(param, None) is not None:
                 material_info[param] = arg_map.get(param)
 
         self.materials[matTag] = material_info

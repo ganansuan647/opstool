@@ -31,23 +31,17 @@ class PyTzQzHandler(SubBaseHandler):
                     "positional": ["matType", "matTag", "qzType", "qult", "Z50", "suction?", "c?"]
                 },
                 "PyLiq1": {
-                    "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "ele1", "ele2"]
-                },
-                "PyLiq1-timeSeries": {
-                    "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "-timeSeries", "timeSeriesTag"]
+                    "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "ele1?", "ele2?"],
+                    "options": {"-timeSeries": "timeSeriesTag"}
                 },
                 "TzLiq1": {
-                    "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "ele1", "ele2"]
-                },
-                "TzLiq1-timeSeries": {
-                    "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "-timeSeries", "timeSeriesTag"]
+                    "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "ele1?", "ele2?"],
+                    "options": {"-timeSeries": "timeSeriesTag"}
                 },
                 "QzLiq1": {
-                    "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "ele1", "ele2"]
+                    "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "ele1?", "ele2?"],
+                    "options": {"-timeSeries": "timeSeriesTag"}
                 },
-                "QzLiq1-timeSeries": {
-                    "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "-timeSeries", "timeSeriesTag"]
-                }
             }
         }
 
@@ -63,21 +57,14 @@ class PyTzQzHandler(SubBaseHandler):
     def handle(self, func_name: str, arg_map: dict[str, Any]):
         args, kwargs = arg_map["args"], arg_map["kwargs"]
         matType = args[0]
-        
-        # 处理特殊情况：带有-timeSeries的材料类型
-        if matType in ["PyLiq1", "TzLiq1", "QzLiq1"] and "-timeSeries" in args:
-            matType = f"{matType}-timeSeries"
-            
+
         dispatch = {
             "PySimple1": self._handle_PySimple1,
             "TzSimple1": self._handle_TzSimple1,
             "QzSimple1": self._handle_QzSimple1,
             "PyLiq1": self._handle_PyLiq1,
-            "PyLiq1-timeSeries": self._handle_PyLiq1_timeSeries,
             "TzLiq1": self._handle_TzLiq1,
-            "TzLiq1-timeSeries": self._handle_TzLiq1_timeSeries,
             "QzLiq1": self._handle_QzLiq1,
-            "QzLiq1-timeSeries": self._handle_QzLiq1_timeSeries
         }.get(matType, self._unknown)
         dispatch(*args, **kwargs)
 
@@ -86,7 +73,7 @@ class PyTzQzHandler(SubBaseHandler):
         Handle `PySimple1` Material
 
         uniaxialMaterial('PySimple1', matTag, soilType, pult, Y50, Cd, c=0.0)
-        
+
         rule = {
             "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c?"]
         }
@@ -173,39 +160,14 @@ class PyTzQzHandler(SubBaseHandler):
         Handle `PyLiq1` Material (with element references)
 
         uniaxialMaterial('PyLiq1', matTag, soilType, pult, Y50, Cd, c, pRes, ele1, ele2)
-        
-        rule = {
-            "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "ele1", "ele2"]
-        }
-        """
-        arg_map = self._parse(self.handles()[0], *args, **kwargs)
 
-        matTag = arg_map.get("matTag")
-        material_info = {
-            "matType": arg_map.get("matType"),
-            "matTag": matTag,
-            "soilType": arg_map.get("soilType"),
-            "pult": arg_map.get("pult"),
-            "Y50": arg_map.get("Y50"),
-            "Cd": arg_map.get("Cd"),
-            "c": arg_map.get("c"),
-            "pRes": arg_map.get("pRes"),
-            "ele1": arg_map.get("ele1"),
-            "ele2": arg_map.get("ele2")
-        }
-
-        self.materials[matTag] = material_info
-        return material_info
-
-    def _handle_PyLiq1_timeSeries(self, *args, **kwargs) -> dict[str, Any]:
-        """
-        Handle `PyLiq1` Material (with time series)
-
+        (with time series)
         uniaxialMaterial('PyLiq1', matTag, soilType, pult, Y50, Cd, c, pRes, '-timeSeries', timeSeriesTag)
-        
+
         rule = {
-            "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "-timeSeries", "timeSeriesTag"]
-        }
+            "positional": ["matType", "matTag", "soilType", "pult", "Y50", "Cd", "c", "pRes", "ele1?", "ele2?"],
+            "options": {"-timeSeries": "timeSeriesTag"}
+        },
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
 
@@ -219,9 +181,16 @@ class PyTzQzHandler(SubBaseHandler):
             "Cd": arg_map.get("Cd"),
             "c": arg_map.get("c"),
             "pRes": arg_map.get("pRes"),
-            "-timeSeries": True,
-            "timeSeriesTag": arg_map.get("timeSeriesTag")
         }
+
+        if arg_map.get("ele1"):
+            material_info["ele1"] = arg_map.get("ele1")
+
+        if arg_map.get("ele2"):
+            material_info["ele2"] = arg_map.get("ele2")
+
+        if "-timeSeries" in args:
+            material_info["timeSeriesTag"] = arg_map.get("timeSeriesTag")
 
         self.materials[matTag] = material_info
         return material_info
@@ -232,35 +201,12 @@ class PyTzQzHandler(SubBaseHandler):
 
         uniaxialMaterial('TzLiq1', matTag, tzType, tult, z50, c, ele1, ele2)
         
-        rule = {
-            "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "ele1", "ele2"]
-        }
-        """
-        arg_map = self._parse(self.handles()[0], *args, **kwargs)
-
-        matTag = arg_map.get("matTag")
-        material_info = {
-            "matType": arg_map.get("matType"),
-            "matTag": matTag,
-            "tzType": arg_map.get("tzType"),
-            "tult": arg_map.get("tult"),
-            "z50": arg_map.get("z50"),
-            "c": arg_map.get("c"),
-            "ele1": arg_map.get("ele1"),
-            "ele2": arg_map.get("ele2")
-        }
-
-        self.materials[matTag] = material_info
-        return material_info
-
-    def _handle_TzLiq1_timeSeries(self, *args, **kwargs) -> dict[str, Any]:
-        """
-        Handle `TzLiq1` Material (with time series)
-
+        (with time series)
         uniaxialMaterial('TzLiq1', matTag, tzType, tult, z50, c, '-timeSeries', timeSeriesTag)
         
         rule = {
-            "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "-timeSeries", "timeSeriesTag"]
+            "positional": ["matType", "matTag", "tzType", "tult", "z50", "c", "ele1?", "ele2?"],
+            "options": {"-timeSeries": "timeSeriesTag"}
         }
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
@@ -273,9 +219,16 @@ class PyTzQzHandler(SubBaseHandler):
             "tult": arg_map.get("tult"),
             "z50": arg_map.get("z50"),
             "c": arg_map.get("c"),
-            "-timeSeries": True,
-            "timeSeriesTag": arg_map.get("timeSeriesTag")
         }
+
+        if arg_map.get("ele1"):
+            material_info["ele1"] = arg_map.get("ele1")
+
+        if arg_map.get("ele2"):
+            material_info["ele2"] = arg_map.get("ele2")
+
+        if "-timeSeries" in args:
+            material_info["timeSeriesTag"] = arg_map.get("timeSeriesTag")
 
         self.materials[matTag] = material_info
         return material_info
@@ -286,37 +239,12 @@ class PyTzQzHandler(SubBaseHandler):
 
         uniaxialMaterial('QzLiq1', matTag, soilType, qult, Z50, Cd, c, alpha, ele1, ele2)
         
-        rule = {
-            "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "ele1", "ele2"]
-        }
-        """
-        arg_map = self._parse(self.handles()[0], *args, **kwargs)
-
-        matTag = arg_map.get("matTag")
-        material_info = {
-            "matType": arg_map.get("matType"),
-            "matTag": matTag,
-            "soilType": arg_map.get("soilType"),
-            "qult": arg_map.get("qult"),
-            "Z50": arg_map.get("Z50"),
-            "Cd": arg_map.get("Cd"),
-            "c": arg_map.get("c"),
-            "alpha": arg_map.get("alpha"),
-            "ele1": arg_map.get("ele1"),
-            "ele2": arg_map.get("ele2")
-        }
-
-        self.materials[matTag] = material_info
-        return material_info
-
-    def _handle_QzLiq1_timeSeries(self, *args, **kwargs) -> dict[str, Any]:
-        """
-        Handle `QzLiq1` Material (with time series)
-
+        (with time series)
         uniaxialMaterial('QzLiq1', matTag, soilType, qult, Z50, Cd, c, alpha, '-timeSeries', timeSeriesTag)
         
         rule = {
-            "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "-timeSeries", "timeSeriesTag"]
+            "positional": ["matType", "matTag", "soilType", "qult", "Z50", "Cd", "c", "alpha", "ele1?", "ele2?"],
+            "options": {"-timeSeries": "timeSeriesTag"}
         }
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
@@ -331,9 +259,16 @@ class PyTzQzHandler(SubBaseHandler):
             "Cd": arg_map.get("Cd"),
             "c": arg_map.get("c"),
             "alpha": arg_map.get("alpha"),
-            "-timeSeries": True,
-            "timeSeriesTag": arg_map.get("timeSeriesTag")
         }
+
+        if arg_map.get("ele1"):
+            material_info["ele1"] = arg_map.get("ele1")
+
+        if arg_map.get("ele2"):
+            material_info["ele2"] = arg_map.get("ele2")
+
+        if "-timeSeries" in args:
+            material_info["timeSeriesTag"] = arg_map.get("timeSeriesTag")
 
         self.materials[matTag] = material_info
         return material_info

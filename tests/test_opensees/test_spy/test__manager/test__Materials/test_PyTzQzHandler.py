@@ -103,7 +103,6 @@ def test_handle_PyLiq1_with_timeSeries(material_manager: MaterialManager) -> Non
     assert material_data["Cd"] == 0.65
     assert material_data["c"] == 0.12
     assert material_data["pRes"] == 65.0
-    assert material_data["-timeSeries"] is True
     assert material_data["timeSeriesTag"] == 20
 
 
@@ -141,7 +140,6 @@ def test_handle_TzLiq1_with_timeSeries(material_manager: MaterialManager) -> Non
     assert material_data["tult"] == 170.0
     assert material_data["z50"] == 0.026
     assert material_data["c"] == 0.23
-    assert material_data["-timeSeries"] is True
     assert material_data["timeSeriesTag"] == 21
 
 
@@ -183,7 +181,6 @@ def test_handle_QzLiq1_with_timeSeries(material_manager: MaterialManager) -> Non
     assert material_data["Cd"] == 0.75
     assert material_data["c"] == 0.19
     assert material_data["alpha"] == 0.55
-    assert material_data["-timeSeries"] is True
     assert material_data["timeSeriesTag"] == 22
 
 

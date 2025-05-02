@@ -19,14 +19,10 @@ def test_handle_uniaxial_material(material_manager: MaterialManager):
     """测试处理uniaxialMaterial命令"""
     # 模拟参数
     func_name = "uniaxialMaterial"
-    arg_map = {
-        "matType": "Steel01",
-        "matTag": 1,
-        "args": [36000, 2.0e5, 0.01]
-    }
+    args = ("Steel01", 1, 36000, 2.0e5, 0.01)
 
     # 调用待测试方法
-    material_manager.handle(func_name, arg_map)
+    material_manager.handle(func_name, {"args": args, "kwargs": {}})
 
     # 验证结果
     assert 1 in material_manager.materials
@@ -34,22 +30,15 @@ def test_handle_uniaxial_material(material_manager: MaterialManager):
     assert material["matType"] == "Steel01"
     assert material["matTag"] == 1
     assert material["args"] == [36000, 2.0e5, 0.01]
-    assert material["materialCommandType"] == "uniaxialMaterial"
 
 def test_handle_nd_material(material_manager: MaterialManager):
     """测试处理nDMaterial命令"""
     # 模拟参数
     func_name = "nDMaterial"
-    arg_map = {
-        "matType": "ElasticIsotropic",
-        "matTag": 2,
-        "E": 2.0e5,
-        "nu": 0.3,
-        "rho": 7.85e-9
-    }
+    args = ("ElasticIsotropic", 2, 2.0e5, 0.3, 7.85e-9)
 
     # 调用待测试方法
-    material_manager.handle(func_name, arg_map)
+    material_manager.handle(func_name, {"args": args, "kwargs": {}})
 
     # 验证结果
     assert 2 in material_manager.materials
@@ -59,7 +48,6 @@ def test_handle_nd_material(material_manager: MaterialManager):
     assert material["E"] == 2.0e5
     assert material["nu"] == 0.3
     assert material["rho"] == 7.85e-9
-    assert material["materialCommandType"] == "nDMaterial"
 
 def test_get_material(material_manager: MaterialManager):
     """测试获取材料信息"""

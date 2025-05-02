@@ -3,7 +3,15 @@ from copy import deepcopy
 from typing import Any, Literal, Optional
 
 from ._BaseHandler import BaseHandler
-from ._Materials import StandardModelsHandler
+from ._Materials import (
+    ConcreteWallsHandler,
+    ContactMaterialsHandler,
+    InitialStateHandler,
+    StandardModelsHandler,
+    TsinghuaSandModelsHandler,
+    UCSDSaturatedSoilHandler,
+    UCSDSoilModelsHandler,
+)
 
 
 class MaterialManager(BaseHandler):
@@ -14,7 +22,13 @@ class MaterialManager(BaseHandler):
         # 构建 “命令 -> {matType -> handler}” 映射
         self._command2typehandler: dict[str, dict[str, BaseHandler]] = defaultdict(dict)
         handler_classes = [
-            StandardModelsHandler
+            StandardModelsHandler,
+            TsinghuaSandModelsHandler,
+            ConcreteWallsHandler,
+            ContactMaterialsHandler,
+            InitialStateHandler,
+            UCSDSoilModelsHandler,
+            UCSDSaturatedSoilHandler,
         ]
         for cls in handler_classes:
             cmd = cls.handles()[0]

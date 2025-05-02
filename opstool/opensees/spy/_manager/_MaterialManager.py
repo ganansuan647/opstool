@@ -18,7 +18,7 @@ class MaterialManager(BaseHandler):
             NDMaterialHandler
         ]
         for cls in handler_classes:
-            cmd = cls.handles()[0]  # 目前每个处理器只支持一个命令
+            cmd = cls.handles()[0]
             for typ in cls.types():
                 self._command2typehandler[cmd][typ] = cls(self._command2typehandler[cmd], self.materials)
 
@@ -54,7 +54,7 @@ class MaterialManager(BaseHandler):
             "matType": matType,
             "matTag": matTag,
             "args": args,
-            "materialCommandType": func_name  # uniaxialMaterial 或 nDMaterial
+            "materialType": func_name  # uniaxialMaterial 或 nDMaterial
         }
         self.materials[matTag] = matinfo
 

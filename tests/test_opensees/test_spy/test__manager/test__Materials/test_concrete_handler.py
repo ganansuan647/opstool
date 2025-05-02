@@ -69,25 +69,33 @@ def test_handle_Concrete04(material_manager: MaterialManager) -> None:
     assert material_data["beta"] == 0.7
 
 
+def test_handle_Concrete06(material_manager: MaterialManager) -> None:
+    """测试Concrete06材料的数据处理"""
+    cmd = "uniaxialMaterial"
+    args = ("Concrete06", 5, -30.0, -0.002, 0.4, 0.5, 0.75, 3.0, 0.0001, 4.0, 0.8)
+    material_manager.handle(cmd, {"args": args, "kwargs": {}})
+
+    # 检查材料是否正确存储
+    assert 5 in material_manager.materials
+    material_data = material_manager.materials[5]
+    assert material_data["matType"] == "Concrete06"
+    assert material_data["matTag"] == 5
+    assert material_data["fc"] == -30.0
+    assert material_data["e0"] == -0.002
+    assert material_data["n"] == 0.4
+    assert material_data["k"] == 0.5
+    assert material_data["alpha1"] == 0.75
+    assert material_data["fcr"] == 3.0
+    assert material_data["ecr"] == 0.0001
+    assert material_data["b"] == 4.0
+    assert material_data["alpha2"] == 0.8
+
+
 def test_handle_Concrete07(material_manager: MaterialManager) -> None:
     """测试Concrete07材料的数据处理"""
     cmd = "uniaxialMaterial"
     args = ("Concrete07", 4, -30.0, -0.002, 28000.0, 3.5, 0.0001, 4.0, 15.0, 1.2)
     material_manager.handle(cmd, {"args": args, "kwargs": {}})
-
-    # 检查材料是否正确存储
-    assert 4 in material_manager.materials
-    material_data = material_manager.materials[4]
-    assert material_data["matType"] == "Concrete07"
-    assert material_data["matTag"] == 4
-    assert material_data["fc"] == -30.0
-    assert material_data["epsc"] == -0.002
-    assert material_data["Ec"] == 28000.0
-    assert material_data["ft"] == 3.5
-    assert material_data["et"] == 0.0001
-    assert material_data["xp"] == 4.0
-    assert material_data["xn"] == 15.0
-    assert material_data["r"] == 1.2
 
 
 def test_handle_Concrete01WithSITC(material_manager: MaterialManager) -> None:

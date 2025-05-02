@@ -24,22 +24,22 @@ class ConcreteHandler(SubBaseHandler):
                     "positional": ["matType", "matTag", "fpc", "epsc0", "fpcu", "epscu", "lambda", "ft", "Ets"]
                 },
                 "Concrete04": {
-                    "positional": ["matType", "matTag", "fc", "ec", "ecu", "Ec", "fct?", "et?", "beta?"]
+                    "positional": ["matType", "matTag", "fc", "epsc", "epscu", "Ec", "fct?", "et?", "beta?"]
                 },
                 "Concrete06": {
                     "positional": ["matType", "matTag", "fc", "e0", "n", "k", "alpha1", "fcr", "ecr", "b", "alpha2"]
                 },
                 "Concrete07": {
-                    "positional": ["matType", "matTag", "fc", "ec", "Ec", "ft", "et", "xp", "xn", "r"]
+                    "positional": ["matType", "matTag", "fc", "epsc", "Ec", "ft", "et", "xp", "xn", "r"]
                 },
                 "Concrete01WithSITC": {
-                    "positional": ["matType", "matTag", "fpc", "epsc0", "fpcu", "epscu", "endStrainSITC"]
+                    "positional": ["matType", "matTag", "fpc", "epsc0", "fpcu", "epsU", "endStrainSITC?"]
                 },
                 "ConfinedConcrete01": {
                     "positional": ["matType", "matTag", "secType", "fpc", "ec0", "colors"]
                 },
                 "ConcreteD": {
-                    "positional": ["matType", "matTag", "fc", "epsc", "ft", "epst", "Ec", "alphac", "alphat", "eta"]
+                    "positional": ["matType", "matTag", "fc", "epsc", "ft", "epst", "Ec", "alphac", "alphat", "cesp?", "etap?"]
                 },
                 "FRPConfinedConcrete": {
                     "positional": ["matType", "matTag", "fpc1", "fpcc", "epsc0", "D", "c", "Ej", "Sj", "tj", "eju", "S", "fyl", "fyh",

@@ -29,11 +29,25 @@ class SteelReinforcingHandler(SubBaseHandler):
                     "positional": ["matType", "matTag", "Fy", "E0", "b", "R0?", "cR1?", "cR2?", "a1?", "a2?", "a3?", "a4?"]
                 },
                 "Steel4": {
-                    "positional": ["matType", "matTag", "Fy", "E0", "b", "R0?", "cR1?", "cR2?", "a1?", "a2?", "a3?", "a4?"]
+                    "positional": ["matType", "matTag", "Fy", "E0", "b"],
+                    "options": {
+                        "-asym": "asym?*0",
+                        "-kin": ["b_k?", "params?", "b_kc?", "R_0c?", "r_1c?", "r_2c?"],
+                        "-iso": ["b_i?", "rho_i?", "b_l?", "R_i?", "l_yp?", "b_ic?", "rho_ic?", "b_lc?", "R_ic?"],
+                        "-ult": ["f_u?", "R_u?", "f_uc?", "R_uc?"],
+                        "-init": "sig_init?",
+                        "-mem": "cycNum?"
+                    }
                 },
                 "ReinforcingSteel": {
-                    "positional": ["matType", "matTag", "fy", "fu", "Es", "Esh", "eps_sh", "eps_ult", "rel_reloading?",
-                                  "rel_unloading?", "lsr?", "beta?", "r?", "gama?"]
+                    "positional": ["matType", "matTag", "fy", "fu", "Es", "Esh", "eps_sh", "eps_ult"],
+                    "options": {
+                        "-GABuck": ["lsr?", "beta?", "r?", "gamma?"],
+                        "-DMBuck": ["lsr?", "alpha?"],
+                        "-CMFatigue": ["Cf?", "alpha?", "Cd?"],
+                        "-IsoHard": ["a1?", "limit?"],
+                        "-MPCurveParams": ["R1?","R2?","R3?"]
+                    }
                 },
                 "Dodd_Restrepo": {
                     "positional": ["matType", "matTag", "Fy", "Fu", "Es", "Esh", "eps_sh", "eps_ult", "C1?", "C2?", "C3?", "sig_init?"]
@@ -128,14 +142,22 @@ class SteelReinforcingHandler(SubBaseHandler):
         }
 
         # 添加可选参数
-        optional_params = ["R0", "cR1", "cR2", "a1", "a2", "a3", "a4", "sigInit"]
-        for param in optional_params:
-            if param in arg_map:
-                material_info[param] = arg_map.get(param)
+        optional_params = {
+            "R0": 18.0,
+            "cR1": 0.925,
+            "cR2": 0.15,
+            "a1": 0.0,
+            "a2": 1.0,
+            "a3": 0.0,
+            "a4": 1.0,
+            "sigInit": 0.0
+        }
 
-        # 处理params列表参数
-        if "params" in arg_map:
-            material_info["params"] = arg_map.get("params")
+        for param, default_value in optional_params.items():
+            if param in arg_map and arg_map.get(param) is not None:
+                material_info[param] = arg_map.get(param)
+            else:
+                material_info[param] = default_value
 
         self.materials[matTag] = material_info
         return material_info
@@ -149,7 +171,15 @@ class SteelReinforcingHandler(SubBaseHandler):
                          '-ult', f_u, R_u, f_uc, R_uc, '-init', sig_init, '-mem', cycNum)
         
         rule = {
-            "positional": ["matType", "matTag", "Fy", "E0", "options"]
+            "positional": ["matType", "matTag", "Fy", "E0", "b"],
+            "options": {
+                "-asym": "asym?*0",
+                "-kin": ["b_k?", "params?", "b_kc?", "R_0c?", "r_1c?", "r_2c?"],
+                "-iso": ["b_i?", "rho_i?", "b_l?", "R_i?", "l_yp?", "b_ic?", "rho_ic?", "b_lc?", "R_ic?"],
+                "-ult": ["f_u?", "R_u?", "f_uc?", "R_uc?"],
+                "-init": "sig_init",
+                "-mem": "cycNum"
+            }
         }
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
@@ -160,13 +190,52 @@ class SteelReinforcingHandler(SubBaseHandler):
             "matTag": matTag,
             "Fy": arg_map.get("Fy"),
             "E0": arg_map.get("E0"),
+            "b": arg_map.get("b"),
         }
 
-        # 处理Steel4的各种选项和参数，这里简化处理
-        # 在实际应用中，可能需要更复杂的解析逻辑来处理各种标志和参数
-        for key, value in arg_map.items():
-            if key not in ["matType", "matTag", "Fy", "E0", "materialCommandType"]:
-                material_info[key] = value
+        # 处理选项标志和相关参数
+        if "-asym" in args:
+            material_info["asym"] = True
+
+        if "-kin" in args:
+            R_0,r_1,r_2 = arg_map.get("params",[20,0.90,0.15])
+            material_info.update({
+                "b_k": arg_map.get("b_k"),
+                "R_0": R_0,
+                "r_1": r_1,
+                "r_2": r_2,
+                "b_kc": arg_map.get("b_kc"),
+                "R_0c": arg_map.get("R_0c"),
+                "r_1c": arg_map.get("r_1c"),
+                "r_2c": arg_map.get("r_2c"),
+            })
+
+        if "-iso" in args:
+            material_info.update({
+                "b_i": arg_map.get("b_i"),
+                "rho_i": arg_map.get("rho_i"),
+                "b_l": arg_map.get("b_l"),
+                "R_i": arg_map.get("R_i"),
+                "l_yp": arg_map.get("l_yp"),
+                "b_ic": arg_map.get("b_ic"),
+                "rho_ic": arg_map.get("rho_ic"),
+                "b_lc": arg_map.get("b_lc"),
+                "R_ic": arg_map.get("R_ic"),
+            })
+
+        if "-ult" in args:
+            material_info.update({
+                "f_u": arg_map.get("f_u"),
+                "R_u": arg_map.get("R_u"),
+                "f_uc": arg_map.get("f_uc"),
+                "R_uc": arg_map.get("R_uc"),
+            })
+
+        if "-init" in args:
+            material_info["sig_init"] = arg_map.get("sig_init")
+
+        if "-mem" in args:
+            material_info["cycNum"] = arg_map.get("cycNum")
 
         self.materials[matTag] = material_info
         return material_info
@@ -180,7 +249,14 @@ class SteelReinforcingHandler(SubBaseHandler):
                          '-MPCurveParams', R1=0.333, R2=18.0, R3=4.0)
         
         rule = {
-            "positional": ["matType", "matTag", "fy", "fu", "Es", "Esh", "eps_sh", "eps_ult", "options"]
+            "positional": ["matType", "matTag", "fy", "fu", "Es", "Esh", "eps_sh", "eps_ult"],
+            "options": {
+                "-GABuck": ["lsr?", "beta?", "r?", "gamma?"],
+                "-DMBuck": ["lsr?", "alpha?"],
+                "-CMFatigue": ["Cf?", "alpha?", "Cd?"],
+                "-IsoHard": ["a1?", "limit?"],
+                "-MPCurveParams": ["R1?", "R2?", "R3?"]
+            }
         }
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
@@ -198,16 +274,39 @@ class SteelReinforcingHandler(SubBaseHandler):
         }
 
         # 处理选项标志和相关参数
-        options = ["GABuck", "DMBuck", "CMFatigue", "IsoHard", "MPCurveParams"]
-        for option in options:
-            if option in arg_map:
-                material_info[option] = arg_map.get(option)
+        if "-GABuck" in args:
+            material_info.update({
+                "lsr": arg_map.get("lsr"),
+                "beta": arg_map.get("beta"),
+                "r": arg_map.get("r"),
+                "gamma": arg_map.get("gamma"),
+            })
 
-        # 处理所有其他参数
-        all_params = ["lsr", "beta", "r", "gamma", "alpha", "Cf", "Cd", "a1", "limit", "R1", "R2", "R3"]
-        for param in all_params:
-            if arg_map.get(param):
-                material_info[param] = arg_map.get(param)
+        if "-DMBuck" in args:
+            material_info.update({
+                "lsr": arg_map.get("lsr"),
+                "alpha": arg_map.get("alpha", 1.0),
+            })
+
+        if "-CMFatigue" in args:
+            material_info.update({
+                "Cf": arg_map.get("Cf"),
+                "alpha": arg_map.get("alpha"),
+                "Cd": arg_map.get("Cd"),
+            })
+
+        if "-IsoHard" in args:
+            material_info.update({
+                "a1": arg_map.get("a1", 4.3),
+                "limit": arg_map.get("limit", 1.0),
+            })
+
+        if "-MPCurveParams" in args:
+            material_info.update({
+                "R1": arg_map.get("R1", 0.333),
+                "R2": arg_map.get("R2", 18.0),
+                "R3": arg_map.get("R3", 4.0),
+            })
 
         self.materials[matTag] = material_info
         return material_info

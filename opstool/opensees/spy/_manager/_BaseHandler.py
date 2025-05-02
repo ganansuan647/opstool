@@ -130,7 +130,7 @@ class BaseHandler(ABC):
                 if isinstance(item, str):
                     break
                 result.append(item)
-            elif item in target_keys:
+            elif not isinstance(item, list) and item in target_keys:
                 found = True
 
         return result
@@ -165,7 +165,7 @@ class BaseHandler(ABC):
                     continue
 
                 # 如果当前项是选项标志, 跳过它及其值
-                if item in option_flags:
+                if isinstance(item,str) and item in option_flags:
                     # 获取这个选项后面的值的数量
                     values = BaseHandler._extract_args_by_str(orig_args[i:], item)
                     skip_count = len(values)

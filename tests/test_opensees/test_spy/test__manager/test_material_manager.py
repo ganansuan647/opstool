@@ -56,7 +56,6 @@ def test_get_material(material_manager: MaterialManager):
         "matType": "Steel01",
         "matTag": 1,
         "args": [36000, 2.0e5, 0.01],
-        "materialCommandType": "uniaxialMaterial"
     }
 
     # 测试获取已有材料
@@ -75,14 +74,12 @@ def test_get_materials_by_type(material_manager: MaterialManager):
         "matType": "Steel01",
         "matTag": 1,
         "args": [36000, 2.0e5, 0.01],
-        "materialCommandType": "uniaxialMaterial"
     }
     material_manager.materials[2] = {
         "matType": "ElasticIsotropic",
         "matTag": 2,
         "E": 2.0e5,
         "nu": 0.3,
-        "materialCommandType": "nDMaterial"
     }
 
     # 测试按类型查询
@@ -106,14 +103,12 @@ def test_get_materials_by_command_type(material_manager: MaterialManager):
         "matType": "Steel01",
         "matTag": 1,
         "args": [36000, 2.0e5, 0.01],
-        "materialCommandType": "uniaxialMaterial"
     }
     material_manager.materials[2] = {
         "matType": "ElasticIsotropic",
         "matTag": 2,
         "E": 2.0e5,
         "nu": 0.3,
-        "materialCommandType": "nDMaterial"
     }
 
     # 测试按命令类型查询
@@ -132,14 +127,12 @@ def test_get_materials(material_manager: MaterialManager):
         "matType": "Steel01",
         "matTag": 1,
         "args": [36000, 2.0e5, 0.01],
-        "materialCommandType": "uniaxialMaterial"
     }
     material_manager.materials[2] = {
         "matType": "ElasticIsotropic",
         "matTag": 2,
         "E": 2.0e5,
         "nu": 0.3,
-        "materialCommandType": "nDMaterial"
     }
 
     # 测试获取全部材料

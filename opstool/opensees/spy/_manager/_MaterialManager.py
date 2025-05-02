@@ -4,10 +4,14 @@ from typing import Any, Literal, Optional
 
 from ._BaseHandler import BaseHandler
 from ._Materials import (
+    ConcreteHandler,
     ConcreteWallsHandler,
     ContactMaterialsHandler,
     InitialStateHandler,
+    PyTzQzHandler,
     StandardModelsHandler,
+    StandardUniaxialHandler,
+    SteelReinforcingHandler,
     TsinghuaSandModelsHandler,
     UCSDSaturatedSoilHandler,
     UCSDSoilModelsHandler,
@@ -23,12 +27,16 @@ class MaterialManager(BaseHandler):
         self._command2typehandler: dict[str, dict[str, BaseHandler]] = defaultdict(dict)
         handler_classes = [
             StandardModelsHandler,
+            StandardUniaxialHandler,
             TsinghuaSandModelsHandler,
             ConcreteWallsHandler,
+            ConcreteHandler,
             ContactMaterialsHandler,
             InitialStateHandler,
             UCSDSoilModelsHandler,
             UCSDSaturatedSoilHandler,
+            PyTzQzHandler,
+            SteelReinforcingHandler,
         ]
         for cls in handler_classes:
             cmd = cls.handles()[0]

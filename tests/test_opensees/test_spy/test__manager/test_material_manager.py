@@ -19,17 +19,17 @@ def test_handle_uniaxial_material(material_manager: MaterialManager):
     """测试处理uniaxialMaterial命令"""
     # 模拟参数
     func_name = "uniaxialMaterial"
-    args = ("Steel01", 1, 36000, 2.0e5, 0.01)
-
-    # 调用待测试方法
+    args = ("Steel01", 1, 420.0, 200000.0, 0.01, 0.5, 1.0, 0.0, 1.0)
     material_manager.handle(func_name, {"args": args, "kwargs": {}})
 
-    # 验证结果
+    # 检查材料是否正确存储
     assert 1 in material_manager.materials
-    material = material_manager.materials[1]
-    assert material["matType"] == "Steel01"
-    assert material["matTag"] == 1
-    assert material["args"] == [36000, 2.0e5, 0.01]
+    material_data = material_manager.materials[1]
+    assert material_data["matType"] == "Steel01"
+    assert material_data["matTag"] == 1
+    assert material_data["Fy"] == 420.0
+    assert material_data["E0"] == 200000.0
+    assert material_data["b"] == 0.01
 
 def test_handle_nd_material(material_manager: MaterialManager):
     """测试处理nDMaterial命令"""

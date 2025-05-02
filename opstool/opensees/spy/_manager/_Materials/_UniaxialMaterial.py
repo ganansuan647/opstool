@@ -1,4 +1,4 @@
-support =  [
+material_list =  [
     # 钢材和钢筋材料
     "Steel01", "Steel02", "Steel4", "ReinforcingSteel", "Dodd_Restrepo",
     "RambergOsgoodSteel", "SteelMPF", "Steel01Thermal",

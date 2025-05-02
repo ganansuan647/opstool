@@ -1,25 +1,25 @@
 
-support = [
-    # 清华沙土模型
+material_list = [
+    # Tsinghua Sand Models
     "CycLiqCP", "CycLiqCPSP",
 
-    # 混凝土墙体建模材料
+    # Materials for Modeling Concrete Walls
     "PlateFromPlaneStress", "PlateRebar", "PlasticDamageConcretePlaneStress",
 
-    # 2D和3D接触材料
+    # Contact Materials for 2D and 3D
     "ContactMaterial2D", "ContactMaterial3D",
 
-    # 初始状态分析包装材料
+    # Wrapper Materials for Initial State Analysis
     "InitialStateAnalysisWrapper", "InitialStressMaterial", "InitialStrainMaterial",
 
-    # UC San Diego土壤模型
+    # UC San Diego Soil Models
     "PressureIndependMultiYield", "PressureDependMultiYield",
     "PressureDependMultiYield02", "PressureDependMultiYield03",
 
-    # UC San Diego饱和非排水土壤
+    # UC San Diego Saturated Undrained Soil
     "FluidSolidPorousMaterial",
 
-    # 标准模型
+    # Standard Models
     "ElasticIsotropic", "ElasticOrthotropic", "J2Plasticity", "DruckerPrager",
     "PlaneStress", "PlaneStrain", "MultiaxialCyclicPlasticity", "BoundingCamClay",
     "PlateFiber", "FSAM", "ManzariDafalias", "PM4Sand", "PM4Silt",

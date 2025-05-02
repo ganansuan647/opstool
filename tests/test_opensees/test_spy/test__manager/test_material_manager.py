@@ -10,12 +10,12 @@ def material_manager() -> MaterialManager:
     """每个测试前初始化一个MaterialManager实例"""
     return MaterialManager()
 
-def test_handles(self, material_manager: MaterialManager):
+def test_handles(material_manager: MaterialManager):
     """测试handles方法"""
     expected_commands = ["uniaxialMaterial", "nDMaterial"]
     assert sorted(material_manager.handles()) == sorted(expected_commands)
 
-def test_handle_uniaxial_material(self, material_manager: MaterialManager):
+def test_handle_uniaxial_material(material_manager: MaterialManager):
     """测试处理uniaxialMaterial命令"""
     # 模拟参数
     func_name = "uniaxialMaterial"
@@ -36,7 +36,7 @@ def test_handle_uniaxial_material(self, material_manager: MaterialManager):
     assert material["args"] == [36000, 2.0e5, 0.01]
     assert material["materialCommandType"] == "uniaxialMaterial"
 
-def test_handle_nd_material(self, material_manager: MaterialManager):
+def test_handle_nd_material(material_manager: MaterialManager):
     """测试处理nDMaterial命令"""
     # 模拟参数
     func_name = "nDMaterial"
@@ -61,7 +61,7 @@ def test_handle_nd_material(self, material_manager: MaterialManager):
     assert material["rho"] == 7.85e-9
     assert material["materialCommandType"] == "nDMaterial"
 
-def test_get_material(self, material_manager: MaterialManager):
+def test_get_material(material_manager: MaterialManager):
     """测试获取材料信息"""
     # 添加测试材料
     material_manager.materials[1] = {
@@ -80,7 +80,7 @@ def test_get_material(self, material_manager: MaterialManager):
     material = material_manager.get_material(999)
     assert material is None
 
-def test_get_materials_by_type(self, material_manager: MaterialManager):
+def test_get_materials_by_type(material_manager: MaterialManager):
     """测试按类型获取材料"""
     # 添加测试材料
     material_manager.materials[1] = {
@@ -111,7 +111,7 @@ def test_get_materials_by_type(self, material_manager: MaterialManager):
     materials = material_manager.get_materials_by_type("NonExistentType")
     assert len(materials) == 0
 
-def test_get_materials_by_command_type(self, material_manager: MaterialManager):
+def test_get_materials_by_command_type(material_manager: MaterialManager):
     """测试按命令类型获取材料"""
     # 添加测试材料
     material_manager.materials[1] = {
@@ -137,7 +137,7 @@ def test_get_materials_by_command_type(self, material_manager: MaterialManager):
     assert len(materials) == 1
     assert 2 in materials
 
-def test_get_materials(self, material_manager: MaterialManager):
+def test_get_materials(material_manager: MaterialManager):
     """测试获取材料列表"""
     # 添加测试材料
     material_manager.materials[1] = {
@@ -169,7 +169,7 @@ def test_get_materials(self, material_manager: MaterialManager):
     assert len(materials) == 1
     assert 2 in materials
 
-def test_clear(self, material_manager: MaterialManager):
+def test_clear(material_manager: MaterialManager):
     """测试清除功能"""
     # 添加测试材料
     material_manager.materials[1] = {"matType": "Steel01", "matTag": 1}

@@ -16,6 +16,7 @@ class StandardModelsHandler(SubBaseHandler):
     def _COMMAND_RULES(self) -> dict[str, dict[str, Any]]:
         return {
             "nDMaterial": {
+                "alternative":True,
                 "ElasticIsotropic": {
                     "positional": ["matType", "matTag", "E", "nu", "rho?"]
                 },
@@ -56,7 +57,7 @@ class StandardModelsHandler(SubBaseHandler):
                     "positional": ["matType", "matTag", "S_u", "Su_Rat", "G_o", "h_po", "Den", "Su_factor?", "P_atm?", "nu?", "nG?", "h0?", "eInit?", "lambda?", "phicv?", "nb_wet?", "nb_dry?", "nd?", "Ado?", "ru_max?", "z_max?", "cz?", "ce?", "cgd?", "ckaf?", "m_m?", "CG_consol?"]
                 },
                 "StressDensityModel": {
-                    "positional": ["matType", "matTag", "mDen", "eNot", "A", "n", "nu", "a1", "b1", "a2", "b2", "a3", "b3", "fd", "muNot", "muCyc", "sc", "M", "patm", "ssls*", "hsl", "p1"]
+                    "positional": ["matType", "matTag", "mDen", "eNot", "A", "n", "nu", "a1", "b1", "a2", "b2", "a3", "b3", "fd", "muNot", "muCyc", "sc", "M", "patm", "ssls", "hsl", "p1"]
                 },
                 "AcousticMedium": {
                     "positional": ["matType", "matTag", "K", "rho"]
@@ -120,7 +121,7 @@ class StandardModelsHandler(SubBaseHandler):
             "E": arg_map.get("E"),
             "nu": arg_map.get("nu"),
         }
-        if "rho" in arg_map:
+        if arg_map.get("rho"):
             material_info["rho"] = arg_map.get("rho",0.0)
 
         self.materials[matTag] = material_info
@@ -151,7 +152,7 @@ class StandardModelsHandler(SubBaseHandler):
             "Gyz": arg_map.get("Gyz"),
             "Gzx": arg_map.get("Gzx")
         }
-        if "rho" in arg_map:
+        if arg_map.get("rho"):
             material_info["rho"] = arg_map.get("rho", 0.0)
 
         self.materials[matTag] = material_info
@@ -210,7 +211,7 @@ class StandardModelsHandler(SubBaseHandler):
             "theta": arg_map.get("theta"),
             "density": arg_map.get("density")
         }
-        if "atmPressure" in arg_map:
+        if arg_map.get("atmPressure"):
             material_info["atmPressure"] = arg_map.get("atmPressure", 101e3)
 
         self.materials[matTag] = material_info
@@ -422,7 +423,7 @@ class StandardModelsHandler(SubBaseHandler):
                           "z_max", "c_z", "c_e", "phi_cv", "nu", "g_degr", "c_dr",
                           "c_kaf", "Q_bolt", "R_bolt", "m_par", "F_sed", "p_sed"]
         for param in optional_params:
-            if param in arg_map:
+            if arg_map.get(param):
                 material_info[param] = arg_map.get(param)
 
         self.materials[matTag] = material_info
@@ -455,7 +456,7 @@ class StandardModelsHandler(SubBaseHandler):
                           "phicv", "nb_wet", "nb_dry", "nd", "Ado", "ru_max", "z_max",
                           "cz", "ce", "cgd", "ckaf", "m_m", "CG_consol"]
         for param in optional_params:
-            if param in arg_map:
+            if arg_map.get(param):
                 material_info[param] = arg_map.get(param)
 
         self.materials[matTag] = material_info
@@ -467,7 +468,7 @@ class StandardModelsHandler(SubBaseHandler):
         nDMaterial('StressDensityModel', matTag, mDen, eNot, A, n, nu, a1, b1, a2, b2, a3, b3, fd, muNot, muCyc, sc, M, patm, ssls*, hsl, p1)
 
         rule = {
-            "positional": ["matType", "matTag", "mDen", "eNot", "A", "n", "nu", "a1", "b1", "a2", "b2", "a3", "b3", "fd", "muNot", "muCyc", "sc", "M", "patm", "ssls*", "hsl", "p1"]
+            "positional": ["matType", "matTag", "mDen", "eNot", "A", "n", "nu", "a1", "b1", "a2", "b2", "a3", "b3", "fd", "muNot", "muCyc", "sc", "M", "patm", "ssls", "hsl", "p1"]
         }
         """
         arg_map = self._parse(self.handles()[0], *args, **kwargs)
@@ -496,11 +497,11 @@ class StandardModelsHandler(SubBaseHandler):
         }
 
         # 处理特殊参数
-        if "ssls" in arg_map:
+        if arg_map.get("ssls"):
             material_info["ssls"] = arg_map.get("ssls")
-        if "hsl" in arg_map:
+        if arg_map.get("hsl"):
             material_info["hsl"] = arg_map.get("hsl")
-        if "p1" in arg_map:
+        if arg_map.get("p1"):
             material_info["p1"] = arg_map.get("p1")
 
         self.materials[matTag] = material_info

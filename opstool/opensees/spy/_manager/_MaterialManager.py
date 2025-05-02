@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Any, Literal, Optional
 
 from ._BaseHandler import BaseHandler
-from ._Materials import NDMaterialHandler, UniaxialMaterialHandler
+from ._Materials import StandardModelsHandler
 
 
 class MaterialManager(BaseHandler):
@@ -14,8 +14,7 @@ class MaterialManager(BaseHandler):
         # 构建 “命令 -> {matType -> handler}” 映射
         self._command2typehandler: dict[str, dict[str, BaseHandler]] = defaultdict(dict)
         handler_classes = [
-            UniaxialMaterialHandler,
-            NDMaterialHandler
+            StandardModelsHandler
         ]
         for cls in handler_classes:
             cmd = cls.handles()[0]
@@ -37,16 +36,18 @@ class MaterialManager(BaseHandler):
         return ["uniaxialMaterial", "nDMaterial"]
 
     def handle(self, func_name: str, arg_map: dict[str, Any]):
-        matType = arg_map["matType"]
+        matType = arg_map["args"][0]
         registry = self._command2typehandler.get(func_name, {})
         handler = registry.get(matType)
         if handler:
             handler.handle(func_name, arg_map)
         else:
-            self.handle_unknown_material(func_name, arg_map)
+            self.handle_unknown_material(func_name, *arg_map["args"], **arg_map["kwargs"])
 
-    def handle_unknown_material(self, func_name: str, arg_map: dict[str, Any]):
+    def handle_unknown_material(self, func_name: str, *args, **kwargs):
         """Handle unknown material types"""
+        arg_map = self._parse(func_name, *args, **kwargs)
+
         matTag = int(arg_map.get("matTag"))
         matType = arg_map.get("matType")
         args = arg_map.get("args", [])

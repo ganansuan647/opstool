@@ -9,12 +9,14 @@ from ._SteelReinforcingHandler import SteelReinforcingHandler
 from ._TsinghuaSandModelsHandler import TsinghuaSandModelsHandler
 from ._UCSDSaturatedSoilHandler import UCSDSaturatedSoilHandler
 from ._UCSDSoilModelsHandler import UCSDSoilModelsHandler
+from ._OtherUniaxialHandler import OtherUniaxialHandler
 
 __all__ = [
     "ConcreteHandler",
     "ConcreteWallsHandler",
     "ContactMaterialsHandler",
     "InitialStateHandler",
+    "OtherUniaxialHandler"
     "PyTzQzHandler",
     "StandardModelsHandler",
     "StandardUniaxialHandler",

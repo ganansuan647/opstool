@@ -8,6 +8,7 @@ from ._Materials import (
     ConcreteWallsHandler,
     ContactMaterialsHandler,
     InitialStateHandler,
+    OtherUniaxialHandler,
     PyTzQzHandler,
     StandardModelsHandler,
     StandardUniaxialHandler,
@@ -35,6 +36,7 @@ class MaterialManager(BaseHandler):
             InitialStateHandler,
             UCSDSoilModelsHandler,
             UCSDSaturatedSoilHandler,
+            OtherUniaxialHandler,
             PyTzQzHandler,
             SteelReinforcingHandler,
         ]
